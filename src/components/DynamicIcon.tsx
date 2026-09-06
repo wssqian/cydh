@@ -1,0 +1,58 @@
+import {
+  Archive,
+  BookOpen,
+  BookText,
+  Bot,
+  DownloadCloud,
+  Film,
+  Flame,
+  Gamepad2,
+  HardDrive,
+  Headphones,
+  Image,
+  LayoutTemplate,
+  Magnet,
+  Monitor,
+  Music,
+  PackageOpen,
+  PlaySquare,
+  Puzzle,
+  Smartphone,
+  Tv,
+  Users,
+  Video,
+  Wrench,
+  type LucideIcon,
+  type LucideProps,
+} from 'lucide-react';
+
+const ICONS: Record<string, LucideIcon> = {
+  Archive,
+  BookOpen,
+  BookText,
+  Bot,
+  DownloadCloud,
+  Film,
+  Flame,
+  Gamepad2,
+  HardDrive,
+  Headphones,
+  Image,
+  LayoutTemplate,
+  Magnet,
+  Monitor,
+  Music,
+  PackageOpen,
+  PlaySquare,
+  Puzzle,
+  Smartphone,
+  Tv,
+  Users,
+  Video,
+  Wrench,
+};
+
+export function DynamicIcon({ name, ...props }: { name?: string | null } & LucideProps) {
+  const Icon = name ? ICONS[name] || LayoutTemplate : LayoutTemplate;
+  return <Icon {...props} />;
+}

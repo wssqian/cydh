@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════
+   mobile-tokens.css — Mobile UI Design Tokens
+
+   All --mobile-* CSS custom properties are defined here.
+   These are the single source of truth for mobile-specific
+   dimensions, spacing, and typography.
+
+   Desktop components reference these inside @media queries
+   to conditionally apply mobile styling.
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Layout ─── */
+  --mobile-nav-height: 56px;
+  --mobile-header-height: 52px;
+  --mobile-bottom-nav-height: 56px;
+  --mobile-header-z: 30;
+  --mobile-bottom-nav-z: 45;
+
+  /* ─── Safe Area ─── */
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+  --mobile-safe-left: env(safe-area-inset-left, 0px);
+  --mobile-safe-right: env(safe-area-inset-right, 0px);
+
+  /* ─── Spacing ─── */
+  --mobile-content-px: 12px;
+  --mobile-content-py: 8px;
+  --mobile-section-gap: 16px;
+  --mobile-card-gap: 8px;
+  --mobile-list-gap: 6px;
+
+  /* ─── Typography (relative to 16px base) ─── */
+  --mobile-font-base: 16px;
+  --mobile-font-sm: 0.8125rem;    /* 13px */
+  --mobile-font-xs: 0.6875rem;    /* 11px */
+  --mobile-font-title: 1.0625rem; /* 17px */
+  --mobile-font-heading: 0.9375rem; /* 15px */
+
+  /* ─── Border Radius ─── */
+  --mobile-radius-card: 16px;
+  --mobile-radius-panel: 22px;
+  --mobile-radius-control: 9999px;
+  --mobile-radius-compact: 12px;
+
+  /* ─── Icon Sizes ─── */
+  --mobile-icon-sm: 16px;
+  --mobile-icon-md: 20px;
+  --mobile-icon-lg: 24px;
+
+  /* ─── FAB (Floating Action Button) ─── */
+  --mobile-fab-size: 40px;
+  --mobile-fab-gap: 10px;
+  --mobile-fab-bottom-offset: 12px;
+
+  /* ─── Touch Targets ─── */
+  --mobile-touch-min: 44px;
+
+  /* ─── Gesture ─── */
+  --mobile-swipe-threshold: 60px;
+  --mobile-pull-threshold: 60px;
+  --mobile-long-press-ms: 500ms;
+}
+
+/* ─── Wide mobile / small tablet overrides ─── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  :root {
+    --mobile-content-px: 16px;
+    --mobile-content-py: 10px;
+    --mobile-section-gap: 20px;
+    --mobile-card-gap: 10px;
+    --mobile-font-title: 1.125rem;
+  }
+}
+
+/* ─── Extra small screens (< 360px) ─── */
+@media (max-width: 360px) {
+  :root {
+    --mobile-content-px: 8px;
+    --mobile-content-py: 6px;
+    --mobile-card-gap: 6px;
+    --mobile-font-sm: 0.75rem;
+    --mobile-font-xs: 0.625rem;
+    --mobile-radius-card: 12px;
+    --mobile-radius-panel: 18px;
+  }
+}

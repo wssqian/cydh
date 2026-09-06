@@ -1,0 +1,78 @@
+# --- Dependencies ---
+node_modules/
+
+# --- Build output ---
+build/
+dist/
+coverage/
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+
+# --- Environment & secrets ---
+.env*
+!.env.example
+
+# --- Backups ---
+backups/
+
+# --- Database files (prevent data leakage) ---
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+# --- Tests ---
+tests/
+
+# --- Markdown (AI context / docs excluded from git) ---
+**/*.md
+
+# --- Data directory (server runtime data, NEVER commit) ---
+data/
+pixiv-rank.json
+
+# --- Local data export/import bundles ---
+data-export/
+data-import/
+*.data-bundle.tar.gz
+
+# --- AI / agent development directories ---
+.claude/
+openspec/
+.codegraph/
+.scratch/
+
+# --- Scratch / dev notes ---
+scratch/
+
+# --- Dev server output ---
+.dev-server*
+
+# --- Screenshots / verification images ---
+verify-*.png
+
+# --- Local dev tooling scripts ---
+safe-push-to-github.bat
+
+# --- Sensitive misc ---
+*.key
+*.pem
+*.p12
+*.pfx
+
+# --- Dev leftover files ---
+%TEMP%openspec_err.txt
+HTML.txt
+frontend-backup.zip
+perf-debug.png
+pw-test.cjs
+mcp服务/
+代码guga-pixiv-rank.json
+server/pixiv-ranking.ts.clean
+代碼guga-pixiv-rank.json

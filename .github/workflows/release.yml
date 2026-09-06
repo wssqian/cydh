@@ -1,0 +1,54 @@
+name: release
+
+# 打 vX.Y.Z tag 时触发，构建 dist、签名并发布到 GitHub Releases。
+# 前置条件：
+#   1. 仓库 Secrets 配置 UPDATER_SIGNING_SECRET_KEY（Ed25519 私钥 Base64）。
+#   2. 生产环境已在「发布包签名验证」中配置对应公钥。
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Package dist
+        run: tar -czf dist.tar.gz dist/
+
+      - name: Sign dist package
+        run: npm run updater:sign -- dist.tar.gz
+        env:
+          UPDATER_SIGNING_SECRET_KEY: ${{ secrets.UPDATER_SIGNING_SECRET_KEY }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist.tar.gz
+            dist.tar.gz.sig
+            dist.tar.gz.sha256
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true

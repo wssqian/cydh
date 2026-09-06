@@ -1,0 +1,592 @@
+:root[data-ui-theme="ios-professional"] {
+  --liquid-surface: rgba(248, 250, 252, 0.72);
+  --liquid-surface-strong: rgba(255, 255, 255, 0.84);
+  --liquid-stroke: rgba(15, 23, 42, 0.12);
+  --liquid-highlight: rgba(255, 255, 255, 0.86);
+  --liquid-shadow: rgba(15, 23, 42, 0.08);
+  --liquid-accent: rgba(0, 122, 255, 0.88);
+  --liquid-accent-soft: rgba(0, 122, 255, 0.14);
+  --pro-bg: #eef3f7;
+  --pro-ink: #172033;
+  --pro-muted: #64748b;
+  --pro-blue: #007aff;
+  --pro-teal: #0a7c72;
+  --pro-nav-surface: rgba(248, 250, 252, 0.86);
+  --pro-nav-surface-top: rgba(248, 250, 252, 0.74);
+  --pro-nav-divider: rgba(15, 23, 42, 0.1);
+  --pro-radius-panel: 34px;
+  --pro-radius-card: 30px;
+  --pro-radius-control: 9999px;
+  --pro-radius-compact: 22px;
+  --pro-nav-join-height: 60px;
+  --pro-nav-join-width: 34px;
+}
+
+:root[data-ui-theme="ios-professional"].dark {
+  --liquid-surface: rgba(22, 28, 38, 0.72);
+  --liquid-surface-strong: rgba(27, 34, 46, 0.84);
+  --liquid-stroke: rgba(226, 232, 240, 0.12);
+  --liquid-highlight: rgba(255, 255, 255, 0.16);
+  --liquid-shadow: rgba(0, 0, 0, 0.32);
+  --liquid-accent: rgba(102, 179, 255, 0.9);
+  --liquid-accent-soft: rgba(102, 179, 255, 0.18);
+  --pro-bg: #0f141b;
+  --pro-ink: #edf3f8;
+  --pro-muted: #9aa8ba;
+  --pro-blue: #66b3ff;
+  --pro-teal: #59d3c5;
+  --pro-nav-surface: rgba(17, 24, 34, 0.88);
+  --pro-nav-surface-top: rgba(17, 24, 34, 0.78);
+  --pro-nav-divider: rgba(226, 232, 240, 0.1);
+}
+
+:root[data-ui-theme="ios-professional"] body {
+  background-color: var(--pro-bg);
+  color: var(--pro-ink);
+}
+
+:root[data-ui-theme="ios-professional"] body::before {
+  opacity: 0;
+  background: transparent;
+}
+
+:root[data-ui-theme="ios-professional"].dark body::before {
+  opacity: 0;
+  background: transparent;
+}
+
+:root[data-ui-theme="ios-professional"] .client-background-image {
+  opacity: 1;
+  filter: none;
+}
+
+:root[data-ui-theme="ios-professional"].dark .client-background-image {
+  opacity: 1;
+  filter: none;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-app {
+  color: var(--pro-ink);
+}
+
+:root[data-ui-theme="ios-professional"] .glass,
+:root[data-ui-theme="ios-professional"] .glass-card,
+:root[data-ui-theme="ios-professional"] .liquid-panel {
+  background: var(--liquid-surface-strong);
+  border-color: var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 10px 32px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+}
+
+/* 移动端合成层预算：iOS 主题玻璃面板同样降级 */
+@media (max-width: 1023px) {
+  :root[data-ui-theme="ios-professional"] .glass,
+  :root[data-ui-theme="ios-professional"] .glass-card,
+  :root[data-ui-theme="ios-professional"] .liquid-panel {
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
+  }
+}
+
+:root[data-ui-theme="ios-professional"] .glass-card,
+:root[data-ui-theme="ios-professional"] .liquid-panel {
+  border-radius: var(--pro-radius-panel) !important;
+}
+
+:root[data-ui-theme="ios-professional"] :is(
+  .mobile-feed-panel,
+  .resource-card,
+  .hot-card-container,
+  .glass-panel-fill > .liquid-panel,
+  .search-modal,
+  .weather-card,
+  .liquid-overlay > .liquid-panel
+) {
+  border-radius: var(--pro-radius-panel) !important;
+}
+
+:root[data-ui-theme="ios-professional"] :is(
+  button,
+  input,
+  select,
+  textarea,
+  .liquid-button,
+  .liquid-button-primary,
+  .liquid-chip,
+  .search-tab,
+  .search-provider,
+  .hot-card-item,
+  .hot-glass-card,
+  .hot-card-item-cover,
+  .resource-card-icon
+) {
+  border-radius: var(--pro-radius-control) !important;
+}
+
+:root[data-ui-theme="ios-professional"] :is(.hot-card-item-cover, .resource-card-icon) {
+  overflow: hidden;
+}
+
+:root[data-ui-theme="ios-professional"] .glass::before,
+:root[data-ui-theme="ios-professional"] .glass-card::before,
+:root[data-ui-theme="ios-professional"] .liquid-panel::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 54%);
+  opacity: 0.64;
+}
+
+:root[data-ui-theme="ios-professional"] .glass-hover:hover,
+:root[data-ui-theme="ios-professional"] .liquid-app :is(.glass, .glass-card, .liquid-panel, .liquid-chip):hover {
+  border-color: rgba(0, 122, 255, 0.24);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 14px 34px rgba(15, 23, 42, 0.1);
+}
+
+:root[data-ui-theme="ios-professional"].dark .glass-hover:hover,
+:root[data-ui-theme="ios-professional"].dark .liquid-app :is(.glass, .glass-card, .liquid-panel, .liquid-chip):hover {
+  border-color: rgba(102, 179, 255, 0.26);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 16px 38px rgba(0, 0, 0, 0.36);
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-button,
+:root[data-ui-theme="ios-professional"] .liquid-button-primary,
+:root[data-ui-theme="ios-professional"] .search-tab,
+:root[data-ui-theme="ios-professional"] .search-provider {
+  border-radius: var(--pro-radius-control) !important;
+  letter-spacing: 0;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-button {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #344256;
+}
+
+:root[data-ui-theme="ios-professional"].dark .liquid-button {
+  background: rgba(30, 38, 51, 0.74);
+  border-color: rgba(226, 232, 240, 0.12);
+  color: #dbe6f0;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-button-primary {
+  background: linear-gradient(180deg, #198bff, #006ee6);
+  border-color: rgba(0, 89, 190, 0.32);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 10px 22px rgba(0, 122, 255, 0.18);
+}
+
+:root[data-ui-theme="ios-professional"].dark .liquid-button-primary {
+  background: linear-gradient(180deg, #66b3ff, #1685ef);
+  border-color: rgba(102, 179, 255, 0.28);
+  color: #08131f;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-button:hover,
+:root[data-ui-theme="ios-professional"] .liquid-button-primary:hover {
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 12px 24px rgba(0, 122, 255, 0.16);
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-input {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(15, 23, 42, 0.12);
+  border-radius: var(--pro-radius-control) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+:root[data-ui-theme="ios-professional"].dark .liquid-input {
+  background: rgba(16, 24, 35, 0.82);
+  border-color: rgba(226, 232, 240, 0.14);
+  color: #edf3f8;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-input:focus,
+:root[data-ui-theme="ios-professional"] .liquid-app :is(button, a, input, select, textarea):focus-visible {
+  border-color: rgba(0, 122, 255, 0.52);
+  box-shadow: 0 0 0 4px var(--liquid-accent-soft), inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-chip {
+  background: rgba(255, 255, 255, 0.62);
+  border-color: rgba(15, 23, 42, 0.1);
+  border-radius: var(--pro-radius-control) !important;
+}
+
+:root[data-ui-theme="ios-professional"].dark .liquid-chip {
+  background: rgba(29, 38, 52, 0.7);
+  border-color: rgba(226, 232, 240, 0.11);
+}
+
+:root[data-ui-theme="ios-professional"] aside.glass {
+  background: var(--pro-nav-surface);
+  border-right: 1px solid var(--pro-nav-divider);
+  border-radius: 0 var(--pro-radius-panel) var(--pro-radius-panel) 0 !important;
+}
+
+:root[data-ui-theme="ios-professional"].dark aside.glass {
+  background: var(--pro-nav-surface);
+  border-right-color: var(--pro-nav-divider);
+}
+
+:root[data-ui-theme="ios-professional"] header.glass {
+  background: var(--pro-nav-surface-top);
+  border-bottom-color: var(--pro-nav-divider);
+  border-radius: 0 0 var(--pro-radius-panel) var(--pro-radius-panel) !important;
+}
+
+:root[data-ui-theme="ios-professional"].dark header.glass {
+  background: var(--pro-nav-surface-top);
+  border-bottom-color: var(--pro-nav-divider);
+}
+
+@media (min-width: 640px) {
+  :root[data-ui-theme="ios-professional"] {
+    --pro-nav-join-height: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root[data-ui-theme="ios-professional"] aside.glass {
+    overflow: visible;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: var(--pro-radius-panel) !important;
+  }
+
+  :root[data-ui-theme="ios-professional"] aside.glass::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: calc(-1 * var(--pro-nav-join-width));
+    z-index: 0;
+    width: var(--pro-nav-join-width);
+    height: var(--pro-nav-join-height);
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--pro-nav-surface), var(--pro-nav-surface-top));
+    border-bottom: 1px solid var(--pro-nav-divider);
+    border-bottom-right-radius: var(--pro-radius-panel);
+    box-shadow: 12px 0 22px rgba(15, 23, 42, 0.04);
+    backdrop-filter: blur(20px) saturate(120%);
+    -webkit-backdrop-filter: blur(20px) saturate(120%);
+  }
+
+  :root[data-ui-theme="ios-professional"].dark aside.glass::after {
+    box-shadow: 12px 0 28px rgba(0, 0, 0, 0.2);
+  }
+
+  :root[data-ui-theme="ios-professional"] header.glass {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      0 10px 26px rgba(15, 23, 42, 0.07);
+  }
+
+  :root[data-ui-theme="ios-professional"] header.glass .scrollbar-hide {
+    align-self: center;
+    min-height: 2.75rem;
+    padding: 0.25rem;
+    border: 1px solid var(--pro-nav-divider);
+    border-radius: var(--pro-radius-control);
+    background: rgba(255, 255, 255, 0.42);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  :root[data-ui-theme="ios-professional"].dark header.glass .scrollbar-hide {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  :root[data-ui-theme="ios-professional"] header.glass .scrollbar-hide button {
+    min-height: 2.1rem;
+    padding: 0.38rem 0.875rem;
+    border: 1px solid transparent;
+    border-radius: var(--pro-radius-control) !important;
+    color: var(--pro-muted) !important;
+    font-weight: 650;
+    transform: none !important;
+  }
+
+  :root[data-ui-theme="ios-professional"] header.glass .scrollbar-hide button.text-pink-500 {
+    color: var(--pro-blue) !important;
+    border-color: rgba(0, 122, 255, 0.18);
+    background: rgba(0, 122, 255, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 4px 12px rgba(0, 122, 255, 0.1);
+  }
+
+  :root[data-ui-theme="ios-professional"].dark header.glass .scrollbar-hide button.text-pink-500 {
+    border-color: rgba(102, 179, 255, 0.24);
+    background: rgba(102, 179, 255, 0.14);
+  }
+
+  :root[data-ui-theme="ios-professional"] aside.glass h3 {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    margin-left: 0.25rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgba(0, 122, 255, 0.14);
+    border-radius: var(--pro-radius-control);
+    background: rgba(0, 122, 255, 0.08);
+    color: var(--pro-blue) !important;
+    letter-spacing: 0;
+  }
+
+  :root[data-ui-theme="ios-professional"].dark aside.glass h3 {
+    border-color: rgba(102, 179, 255, 0.18);
+    background: rgba(102, 179, 255, 0.1);
+  }
+}
+
+:root[data-ui-theme="ios-professional"] .resource-card {
+  min-height: clamp(4.35rem, 17vw, 5.1rem);
+  border-radius: var(--pro-radius-card) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .interactive-card {
+  transform: none;
+}
+
+:root[data-ui-theme="ios-professional"] .interactive-card::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 62%);
+}
+
+:root[data-ui-theme="ios-professional"] .resource-card-status {
+  background: var(--pro-teal) !important;
+  box-shadow: 0 0 0 3px rgba(10, 124, 114, 0.12) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .search-only-section {
+  color: var(--pro-ink);
+}
+
+:root[data-ui-theme="ios-professional"] .search-hub-input {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--pro-radius-control) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 14px 38px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-ui-theme="ios-professional"] .search-hub-input-mobile {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--pro-radius-control) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-ui-theme="ios-professional"].dark .search-hub-input {
+  background: rgba(15, 23, 35, 0.84);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.04),
+    0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-ui-theme="ios-professional"].dark .search-hub-input-mobile {
+  background: rgba(15, 23, 35, 0.84);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.04),
+    0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-ui-theme="ios-professional"] .search-source-sheet-panel {
+  border-radius: var(--pro-radius-panel) var(--pro-radius-panel) 0 0 !important;
+}
+
+:root[data-ui-theme="ios-professional"] .search-provider-row,
+:root[data-ui-theme="ios-professional"] .search-tabs {
+  gap: 0.625rem;
+}
+
+:root[data-ui-theme="ios-professional"] .search-panel-container {
+  background: var(--liquid-surface-strong);
+  border-color: var(--liquid-stroke);
+  border-radius: var(--pro-radius-panel) !important;
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 10px 32px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+}
+
+:root[data-ui-theme="ios-professional"] .search-panel-container::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 54%);
+  opacity: 0.64;
+}
+
+:root[data-ui-theme="ios-professional"] .search-panel-container:hover {
+  border-color: rgba(0, 122, 255, 0.24);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 14px 34px rgba(15, 23, 42, 0.1);
+}
+
+:root[data-ui-theme="ios-professional"].dark .search-panel-container:hover {
+  border-color: rgba(102, 179, 255, 0.26);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 16px 38px rgba(0, 0, 0, 0.36);
+}
+
+:root[data-ui-theme="ios-professional"] .search-panel-container .search-tab-bar {
+  /* 使用 iOS Pro 主题色做边缘 fade */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 12px,
+    black calc(100% - 12px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 12px,
+    black calc(100% - 12px),
+    transparent 100%
+  );
+}
+
+:root[data-ui-theme="ios-professional"] .search-panel-container .search-large-input {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--pro-radius-control) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 14px 38px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-ui-theme="ios-professional"].dark .search-panel-container .search-large-input {
+  background: rgba(15, 23, 35, 0.84);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.04),
+    0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+:root[data-ui-theme="ios-professional"] .hot-card-container,
+:root[data-ui-theme="ios-professional"] .glass-panel-fill > .liquid-panel {
+  border-radius: var(--pro-radius-panel) !important;
+}
+
+:root[data-ui-theme="ios-professional"] :is(.hot-card-item, .hot-glass-card, .group.flex.items-start.gap-3) {
+  border-radius: var(--pro-radius-compact) !important;
+}
+
+:root[data-ui-theme="ios-professional"] :is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\[1\.5rem\], .rounded-\[2rem\]) {
+  border-radius: var(--pro-radius-compact) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .acg-image-card {
+  border-radius: 1rem !important;
+}
+
+:root[data-ui-theme="ios-professional"] .hot-card-item:hover,
+:root[data-ui-theme="ios-professional"] .hot-glass-card:hover {
+  background: rgba(0, 122, 255, 0.06) !important;
+}
+
+:root[data-ui-theme="ios-professional"].dark .hot-card-item:hover,
+:root[data-ui-theme="ios-professional"].dark .hot-glass-card:hover {
+  background: rgba(102, 179, 255, 0.08) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .resource-card-title:hover,
+:root[data-ui-theme="ios-professional"] .hot-card-item-title:hover,
+:root[data-ui-theme="ios-professional"] .hover\:text-pink-500:hover,
+:root[data-ui-theme="ios-professional"] .dark\:hover\:text-pink-400:hover {
+  color: var(--pro-blue) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .text-pink-500,
+:root[data-ui-theme="ios-professional"] .text-pink-500\/80,
+:root[data-ui-theme="ios-professional"] .text-pink-600,
+:root[data-ui-theme="ios-professional"] .dark\:text-pink-400 {
+  color: var(--pro-blue) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .text-orange-500,
+:root[data-ui-theme="ios-professional"] .text-orange-600,
+:root[data-ui-theme="ios-professional"] .dark\:text-orange-400 {
+  color: var(--pro-teal) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .ring-pink-500 {
+  --tw-ring-color: var(--pro-blue) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .bg-pink-50,
+:root[data-ui-theme="ios-professional"] .dark\:bg-pink-900\/20 {
+  background-color: rgba(0, 122, 255, 0.08) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .bg-gradient-to-br,
+:root[data-ui-theme="ios-professional"] .bg-gradient-to-r {
+  --tw-gradient-from: var(--pro-blue) !important;
+  --tw-gradient-to: var(--pro-teal) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-overlay {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-overlay > .liquid-panel {
+  max-width: 31rem;
+  border-radius: var(--pro-radius-panel) !important;
+}
+
+:root[data-ui-theme="ios-professional"] .liquid-overlay > .acg-detail-panel {
+  width: min(72rem, calc(100vw - 1.5rem));
+  max-width: min(72rem, calc(100vw - 1.5rem));
+}
+
+:root[data-ui-theme="ios-professional"] .mode-page.nav-page {
+  background: transparent;
+}
+
+:root[data-ui-theme="ios-professional"].dark .mode-page.nav-page {
+  background: transparent;
+}
+
+:root[data-ui-theme="ios-professional"] footer {
+  color: rgba(71, 85, 105, 0.72) !important;
+}
+
+:root[data-ui-theme="ios-professional"].dark footer {
+  color: rgba(148, 163, 184, 0.72) !important;
+}
+
+/* ─── iOS Professional 主题移动端变量覆盖 ─── */
+:root[data-ui-theme="ios-professional"] {
+  --mobile-radius-card: 18px;
+  --mobile-radius-panel: 26px;
+  --mobile-radius-control: 9999px;
+  --mobile-radius-compact: 14px;
+}
+
+:root[data-ui-theme="ios-professional"].dark {
+  --mobile-radius-card: 18px;
+  --mobile-radius-panel: 26px;
+  --mobile-radius-control: 9999px;
+  --mobile-radius-compact: 14px;
+}
+
+@media (max-width: 640px) {
+  :root[data-ui-theme="ios-professional"] .mobile-feed-panel,
+  :root[data-ui-theme="ios-professional"] .resource-card {
+    border-radius: var(--pro-radius-card) !important;
+  }
+
+  :root[data-ui-theme="ios-professional"] .search-hub-input {
+    border-radius: var(--pro-radius-control) !important;
+  }
+}

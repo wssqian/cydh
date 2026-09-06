@@ -1,0 +1,2829 @@
+@import "tailwindcss";
+@import "./mobile-tokens.css";
+
+@theme {
+  --animate-shimmer: shimmer 1.5s infinite;
+  --breakpoint-3xl: 1920px;
+  --duration-sheet-enter: 120ms;
+  --duration-sheet-exit: 100ms;
+  --duration-dropdown-enter: 80ms;
+  --duration-dropdown-exit: 60ms;
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(200%);
+    }
+  }
+}
+
+/* 容器型 shimmer：伪元素 transform 扫光（合成器属性）。
+   原实现动 background-position（非合成器属性），每帧触发主线程 style recalc + paint；
+   改为 ::after 内层 translateX 扫光后由合成器处理，视觉一致且离屏时几乎零开销。 */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+
+
+/* ─── 图片加载动画 ─── */
+
+/* 图片加载中 shimmer 骨架 — 静态底 + 合成器扫光层 */
+.image-loading-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.image-loading-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.22) 48%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.22) 52%,
+    transparent 65%
+  );
+  transform: translateX(100%);
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.dark .image-loading-shimmer {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dark .image-loading-shimmer::after {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.08) 48%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.08) 52%,
+    transparent 65%
+  );
+}
+
+/* 图片加载完成淡入 */
+.image-loaded {
+  opacity: 0;
+  animation: image-fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  /* 解码优化：告诉浏览器图片已就绪 */
+  content-visibility: auto;
+  contain-intrinsic-size: 48px;
+}
+
+@keyframes image-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 图片加载失败占位淡入 */
+.image-error {
+  animation: image-error-in 0.15s ease-out both;
+}
+
+@keyframes image-error-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Grid 布局入场动画（Tab 切换淡入） ─── */
+
+.grid-enter {
+  animation: grid-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--grid-stagger, 0) * 40ms);
+}
+
+@keyframes grid-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 页面级加载骨架 shimmer（与卡片加载分开控制）— 静态底 + 合成器扫光层 */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.20) 48%,
+    rgba(255, 255, 255, 0.26) 50%,
+    rgba(255, 255, 255, 0.20) 52%,
+    transparent 65%
+  );
+  transform: translateX(100%);
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.dark .skeleton-shimmer {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dark .skeleton-shimmer::after {
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.06) 48%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.06) 52%,
+    transparent 65%
+  );
+}
+
+/* ─── LazyResourceCard 占位符动画节流 ───
+   离屏占位卡默认完全静态（扫光层 display:none，零合成层）；
+   进入预热窗口（视口外 800px）后加 .shimmer-warm 才启用扫光。
+   数百张离屏卡不再每帧跑动画，可见区域的动效保持不变。 */
+.lazy-card-placeholder {
+  /* 离屏占位卡跳过布局/绘制（高度由 min-height 固定，估算值准确，无 CLS） */
+  content-visibility: auto;
+  contain-intrinsic-size: auto clamp(4.5rem, 18vw, 5.4rem);
+}
+
+.lazy-card-placeholder .image-loading-shimmer::after,
+.lazy-card-placeholder .skeleton-shimmer::after {
+  display: none;
+}
+
+.lazy-card-placeholder.shimmer-warm .image-loading-shimmer::after,
+.lazy-card-placeholder.shimmer-warm .skeleton-shimmer::after {
+  display: block;
+}
+
+
+/* 入口动画 animation utilities (equivalent to tailwindcss-animate) */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+               scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1))
+               rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
+               scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1))
+               rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+.animate-in {
+  animation-name: enter;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+  --tw-enter-rotate: initial;
+}
+
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+.slide-in-from-top-4 {
+  --tw-enter-translate-y: -1rem;
+}
+
+.slide-in-from-bottom-4 {
+  --tw-enter-translate-y: 1rem;
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}
+.duration-300 {
+  animation-duration: 300ms;
+}
+.duration-500 {
+  animation-duration: 500ms;
+}
+:root {
+  --liquid-surface: rgba(255, 255, 255, 0.27);
+  --liquid-surface-strong: rgba(255, 255, 255, 0.4);
+  --liquid-stroke: rgba(255, 255, 255, 0.68);
+  --liquid-highlight: rgba(255, 255, 255, 0.88);
+  --liquid-shadow: rgba(46, 54, 110, 0.12);
+  --liquid-accent: rgba(236, 72, 153, 0.78);
+  --liquid-accent-soft: rgba(244, 114, 182, 0.22);
+  --liquid-nav-surface: rgba(255, 255, 255, 0.36);
+  --liquid-nav-surface-top: rgba(255, 255, 255, 0.3);
+  --liquid-nav-divider: rgba(255, 255, 255, 0.58);
+  --liquid-radius-panel: 30px;
+  --liquid-radius-card: 26px;
+  --liquid-radius-compact: 20px;
+  --liquid-radius-control: 9999px;
+  --liquid-nav-join-height: 60px;
+  --liquid-nav-join-width: 32px;
+}
+
+.dark {
+  --liquid-surface: rgba(13, 20, 38, 0.24);
+  --liquid-surface-strong: rgba(25, 34, 58, 0.44);
+  --liquid-stroke: rgba(255, 255, 255, 0.16);
+  --liquid-highlight: rgba(255, 255, 255, 0.24);
+  --liquid-shadow: rgba(0, 0, 0, 0.4);
+  --liquid-accent-soft: rgba(236, 72, 153, 0.22);
+  --liquid-nav-surface: rgba(16, 24, 42, 0.42);
+  --liquid-nav-surface-top: rgba(16, 24, 42, 0.34);
+  --liquid-nav-divider: rgba(255, 255, 255, 0.14);
+}
+
+body {
+  background-color: #e7eef9;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* 全局平滑滚动 */
+  scroll-behavior: smooth;
+}
+
+.client-background-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+#root {
+  position: relative;
+  z-index: 2;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.34), transparent 35%),
+    radial-gradient(circle at 82% 20%, rgba(236, 72, 153, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(226, 232, 255, 0.24), rgba(255, 255, 255, 0.07));
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+  /* 性能优化：删除 ambient-shift 动画。
+     原动画驱动 background-position，但渐变背景与元素等大（无 background-size），
+     关键帧位移量恒为 0 —— 没有任何可见动效，却每帧触发全屏 style recalc + paint。 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none !important;
+  }
+}
+
+.dark body::before {
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.08), transparent 35%),
+    radial-gradient(circle at 82% 20%, rgba(236, 72, 153, 0.14), transparent 34%),
+    rgba(2, 6, 23, 0.7);
+}
+
+.dark body {
+  background-color: #0f172a;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.glass,
+.glass-card,
+.liquid-panel {
+  isolation: isolate;
+  background: var(--liquid-surface);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 16px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* .glass-card 单独减负：单个页面上常出现 20-50 张 ResourceCard，每张都是独立合成层；
+   blur 半径从 20px 降至 10px，CPU paint 复杂度近似线性下降，视觉差异极小。 */
+.glass-card {
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* 滚动期间 backdrop-filter 临时降级，由 App.tsx 滚动监听切换 .is-scrolling（停止 120ms 后移除）。
+
+   固定玻璃（aside/header）→ 实色化模拟磨砂观感：避免 backdrop-filter 重采样，
+   同时底色从半透明（36%）升为近实色，消除滚动中“变透明/闪烁”。
+   内容随滑动的玻璃（卡片/面板/搜索按钮/输入框）→ 轻磨砂 blur(2px) 保持质感。 */
+.is-scrolling aside.glass,
+.is-scrolling header.glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.dark.is-scrolling aside.glass,
+.dark.is-scrolling header.glass {
+  background: rgba(16, 24, 42, 0.76);
+}
+
+.is-scrolling .glass-card,
+.is-scrolling .liquid-panel,
+.is-scrolling .glass-search-btn,
+.is-scrolling .liquid-input {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* 移动端合成层预算：玻璃面板 backdrop-filter 降级，减轻 paint/CPU */
+@media (max-width: 1023px) {
+  .glass,
+  .glass-card,
+  .liquid-panel {
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
+  }
+}
+
+.liquid-app {
+  isolation: isolate;
+  position: relative;
+}
+
+.liquid-app :is(button, a, input, select, textarea, .glass, .glass-card, .liquid-panel, .liquid-chip, .liquid-button, .liquid-button-primary) {
+  /* 仅保留合成层友好的 transform/opacity 过渡，移除昂贵的 border-color/box-shadow/filter */
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  touch-action: manipulation;
+}
+
+/* 移动端进一步缩短 transition，消除触感粘滞 */
+@media (pointer: coarse) {
+  .liquid-app :is(button, a, input, select, textarea, .glass, .glass-card, .liquid-panel, .liquid-chip, .liquid-button, .liquid-button-primary) {
+    transition-duration: 0.12s;
+  }
+}
+
+.liquid-app :is(button, a):not(.interactive-card):hover {
+  /* 用 opacity 替代 filter:brightness，避免触发 paint */
+  opacity: 0.92;
+}
+
+.liquid-app :is(button, a):not(.interactive-card):active {
+  opacity: 0.85;
+  transform: translateY(1px) scale(0.995);
+}
+
+.liquid-app :is(input, select, textarea):hover {
+  border-color: rgba(255, 255, 255, 0.82);
+}
+
+.liquid-app :is(.glass, .glass-card, .liquid-panel, .liquid-chip):hover {
+  border-color: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 6px 20px rgba(31, 38, 135, 0.14);
+}
+
+/* ─── 导航/搜索模式页面叠加层 ─── */
+/* nav-page 在 flex 正常流（relative + flex:1），继承父容器 padding 避开 sidebar
+   search-page 条件挂载，用 absolute 叠放（不影响 flex 布局） */
+.mode-page {
+  /* 默认 visibility:hidden 而不是 display:none，保持布局尺寸 */
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.mode-page.active {
+  /* 激活时淡入 animation，仅当 active 被添加时播放一次，避免 transition 首次 toggle 闪烁 */
+  visibility: visible;
+  animation: mode-fade-in 200ms ease-out both;
+  pointer-events: auto;
+}
+
+@keyframes mode-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-page.active {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+/* nav 页面：在 flex 正常流中，继承父容器 padding + 流式排列 */
+.mode-page.nav-page {
+  position: relative;
+  flex: 1;
+}
+
+/* search 页面：absolute 叠放（search 模式下无 sidebar/header 重叠问题）
+   注意：overflow-y: auto 确保热点内容区域在超出视口高度时可滚动，
+   与内部 .hot-content-area 的 max-height 配合形成双层滚动边界。 */
+.mode-page.search-page {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1023px) {
+  .mode-page.search-page {
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* ─── 导航/搜索 UI 块淡入淡出 ─── */
+/* sidebar、header、floating-tools、search-top-buttons 常驻 DOM */
+.mode-fade {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  pointer-events: none;
+}
+
+.mode-fade.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.glass-card,
+.liquid-panel {
+  position: relative;
+  background: var(--liquid-surface-strong);
+  border-radius: var(--liquid-radius-panel);
+  /* 仅保留 transform/opacity 过渡，移除昂贵的 border-color/box-shadow 过渡 */
+  transition: transform 0.2s ease;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.glass::before,
+.glass-card::before,
+.liquid-panel::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.34), transparent 35%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.16), transparent 46%);
+  opacity: 0.76;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.glass-card:hover {
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 6px 20px rgba(31, 38, 135, 0.15);
+}
+
+.interactive-card {
+  /* CSS-only 悬停效果 — 移除 JS 驱动的 --card-pointer-* 变量 */
+  transform: perspective(850px);
+  /* 性能优化：移除 transform-style: preserve-3d。卡片内无 3D 子元素，
+     preserve-3d 会强制每张卡片开启 3D 渲染上下文，阻止浏览器普通合层优化，
+     任何下层变化（滚动/背景）都触发整卡重绘；移除后视觉零变化。 */
+  transition: transform 0.2s ease;
+}
+
+.interactive-card:hover {
+  transform: perspective(850px) translateY(-1px) scale(1.02);
+  /* 用 box-shadow 替代 border-color 过渡来提供视觉反馈 */
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 8px 24px rgba(31, 38, 135, 0.17);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.46);
+  border-color: rgba(255, 255, 255, 0.88);
+}
+.dark .glass-hover:hover {
+  background: rgba(51, 65, 85, 0.46);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.liquid-input {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.35), 0 4px 12px rgba(31, 38, 135, 0.05);
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark .liquid-input {
+  background: rgba(15, 23, 42, 0.28);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.liquid-input:focus {
+  outline: none;
+  border-color: rgba(244, 114, 182, 0.62);
+  box-shadow: 0 0 0 4px var(--liquid-accent-soft), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.liquid-app :is(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  border-color: rgba(244, 114, 182, 0.68);
+  box-shadow: 0 0 0 4px var(--liquid-accent-soft), inset 0 1px 0 var(--liquid-highlight), 0 0 0 0 transparent;
+}
+
+.liquid-button,
+.liquid-button-primary {
+  border-radius: var(--liquid-radius-control);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow: inset 0 1px 0 var(--liquid-highlight), 0 4px 12px rgba(31, 38, 135, 0.1);
+  /* 仅过渡合成层属性，避免 box-shadow/background 触发 paint */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.liquid-button {
+  background: var(--liquid-surface);
+}
+
+.liquid-button-primary {
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.88), rgba(217, 70, 239, 0.72));
+  color: white;
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+/* ---- Search button glassmorphism ---- */
+
+.glass-search-btn {
+  isolation: isolate;
+  position: relative;
+  border-radius: 9999px;
+  border: 1px solid var(--liquid-stroke);
+  background: var(--liquid-surface);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 16px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-origin: center;
+}
+
+/* ---- Search button liquid separation: 收起态（无输入） ----
+   按钮常驻 DOM 以保证 CSS 过渡可行；无输入时以合成层属性表达"溶入栏右端"：
+   缩成 0 宽 + 反向位移 + clip 吃掉本体 + 透明 + 轻模糊融合边缘。 */
+.search-form .glass-search-btn {
+  --liquid-sep-ease: cubic-bezier(0.22, 1.2, 0.36, 1); /* 入场：带轻微回弹 */
+  --liquid-retract-ease: cubic-bezier(0.4, 0, 0.2, 1); /* 回收：顺滑收敛，无回弹 */
+  flex: 0 0 auto;
+  width: 4rem; /* 与 sm: w-20 对应的桌面值由下方媒体查询覆盖 */
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  clip-path: inset(0 0 0 0 round 9999px);
+  filter: blur(0);
+  pointer-events: auto;
+  /* 入场（进入展开态）曲线：带回弹的液滴分离。
+     使用 will-change 提前告知浏览器此元素将频繁变化 */
+  will-change: transform, opacity, clip-path;
+  transition:
+    transform 0.42s var(--liquid-sep-ease),
+    opacity 0.32s ease,
+    clip-path 0.42s var(--liquid-sep-ease),
+    width 0.42s var(--liquid-sep-ease),
+    flex-basis 0.42s var(--liquid-sep-ease);
+}
+
+/* 收起：按钮沿栏右缘滑入并被吞没（液滴吸回），而非原位塌缩裁碎。
+   位移方向为正向 X（向栏右缘），裁切从左缘向右吞没，使按钮像被栏右端吸回。 */
+.search-form:not(.search-form--has-query) .glass-search-btn {
+  width: 0;
+  flex-basis: 0;
+  opacity: 0;
+  /* 正向位移使其滑入栏右缘；scale 同步收缩为液滴 */
+  transform: translateX(3.5rem) scale(0.6);
+  /* 从左缘向右吞没（左 inset 100%），沿栏右缘融合消隐 */
+  clip-path: inset(0 0 0 100% round 9999px);
+  filter: blur(2px);
+  pointer-events: none;
+  border-color: transparent;
+  /* 回收（进入收起态）曲线：顺滑收敛无回弹。
+     transform/clip/filter 0.38s 走在前（视觉先消隐），width/flex-basis 0.5s 尾随
+     让搜索栏在按钮已基本消隐后才完全撑满，避免回收中段栏内空隙。 */
+  transition:
+    transform 0.38s var(--liquid-retract-ease),
+    opacity 0.3s ease,
+    clip-path 0.38s var(--liquid-retract-ease),
+    filter 0.38s var(--liquid-retract-ease),
+    width 0.5s var(--liquid-retract-ease),
+    flex-basis 0.5s var(--liquid-retract-ease),
+    border-color 0.18s ease,
+    box-shadow 0.22s ease,
+    background-color 0.18s ease;
+}
+
+/* 让出按钮宽度的同时收敛 gap —— 一次性状态切换，非逐帧 layout。
+   delay 0.06s 使搜索栏在按钮视觉消隐稍后才完全撑满，避免回收中段栏内空隙。 */
+.search-form {
+  transition: gap 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.06s;
+}
+.search-form:not(.search-form--has-query) {
+  gap: 0;
+}
+
+@media (min-width: 640px) {
+  .search-form .glass-search-btn {
+    width: 5rem; /* sm:w-20 = 5rem */
+  }
+  .search-form:not(.search-form--has-query) .glass-search-btn {
+    transform: translateX(4.5rem) scale(0.6);
+  }
+}
+
+/* 动画期才提升合成层，结束后移除该类复位 will-change */
+.glass-search-btn.is-animating {
+  will-change: transform, opacity, clip-path, filter, width, flex-basis;
+}
+
+/* reduced-motion：即时显隐，跳过 scale/clip 液滴 */
+@media (prefers-reduced-motion: reduce) {
+  .search-form,
+  .search-form .glass-search-btn,
+  .search-form:not(.search-form--has-query) .glass-search-btn {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+  }
+  .search-form:not(.search-form--has-query) .glass-search-btn {
+    transform: none;
+    clip-path: inset(0 0 0 0 round 9999px);
+    filter: none;
+  }
+}
+
+.glass-search-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.28), transparent 40%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.14), transparent 46%);
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.glass-search-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.28), transparent 40%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.14), transparent 46%);
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.glass-search-btn svg {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-search-btn:hover {
+  border-color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+    0 6px 20px rgba(31, 38, 135, 0.15);
+}
+
+.glass-search-btn:hover::before {
+  opacity: 0.92;
+}
+
+.glass-search-btn:hover svg {
+  color: rgba(244, 114, 182, 0.92);
+  filter: drop-shadow(0 1px 4px rgba(244, 114, 182, 0.3));
+  transition: color 0.22s ease, filter 0.22s ease;
+}
+
+.glass-search-btn:active {
+  opacity: 0.85;
+  transform: scale(0.955) translateY(1px);
+  transition-duration: 0.12s;
+  transition-timing-function: ease;
+}
+
+.dark .glass-search-btn {
+  background: rgba(25, 34, 58, 0.38);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.dark .glass-search-btn svg {
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.dark .glass-search-btn:hover {
+  background: rgba(51, 65, 85, 0.52);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .glass-search-btn:hover svg {
+  color: rgba(244, 114, 182, 0.9);
+  filter: drop-shadow(0 1px 6px rgba(244, 114, 182, 0.35));
+}
+
+.liquid-button:hover,
+.liquid-button-primary:hover {
+  opacity: 0.92;
+}
+
+.liquid-button:disabled,
+.liquid-button-primary:disabled {
+  opacity: 0.55;
+  transform: none;
+}
+
+.liquid-chip {
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: var(--liquid-radius-control);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+.liquid-app :is(
+  button,
+  input,
+  select,
+  textarea,
+  .liquid-button,
+  .liquid-button-primary,
+  .liquid-chip,
+  .search-tab,
+  .search-provider,
+  .hot-card-item,
+  .hot-card-item-cover,
+  .resource-card-icon
+) {
+  border-radius: var(--liquid-radius-control) !important;
+}
+
+.liquid-app :is(
+  .mobile-feed-panel,
+  .resource-card,
+  .hot-card-container,
+  .glass-panel-fill > .liquid-panel,
+  .liquid-overlay > .liquid-panel
+) {
+  border-radius: var(--liquid-radius-panel) !important;
+}
+
+.liquid-app :is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\[1\.5rem\], .rounded-\[2rem\]) {
+  border-radius: var(--liquid-radius-card);
+}
+
+.liquid-app .acg-image-card {
+  border-radius: 1rem !important;
+}
+
+.search-tab {
+  position: relative;
+}
+
+aside.glass {
+  background: var(--liquid-nav-surface);
+  border-right: 1px solid var(--liquid-nav-divider);
+  border-radius: 0 var(--liquid-radius-panel) var(--liquid-radius-panel) 0 !important;
+}
+
+header.glass {
+  background: var(--liquid-nav-surface-top);
+  border-bottom-color: var(--liquid-nav-divider);
+  border-radius: 0 0 var(--liquid-radius-panel) var(--liquid-radius-panel) !important;
+  /* 仅保留 opacity 过渡（mode-fade 需要），移除昂贵的 border-color/box-shadow 过渡 */
+  transition: opacity 180ms ease-out;
+}
+
+aside.glass h3 {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  margin-left: 0.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(244, 114, 182, 0.2);
+  border-radius: var(--liquid-radius-control);
+  background: var(--liquid-accent-soft);
+  color: rgb(219, 39, 119) !important;
+}
+
+aside.glass a[href^="/category/"] {
+  min-height: 2.25rem;
+  border-radius: var(--liquid-radius-control) !important;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --liquid-nav-join-height: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  aside.glass {
+    overflow: visible;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: var(--liquid-radius-panel) !important;
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      10px 0 26px rgba(46, 54, 110, 0.08);
+  }
+
+  aside.glass::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: calc(-1 * var(--liquid-nav-join-width));
+    z-index: 0;
+    width: var(--liquid-nav-join-width);
+    height: var(--liquid-nav-join-height);
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--liquid-nav-surface), var(--liquid-nav-surface-top));
+    border-bottom: 1px solid var(--liquid-nav-divider);
+    border-bottom-right-radius: var(--liquid-radius-panel);
+    box-shadow: 12px 0 22px rgba(46, 54, 110, 0.06);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+
+  .dark aside.glass::after {
+    box-shadow: 12px 0 28px rgba(0, 0, 0, 0.22);
+  }
+
+  header.glass {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      0 10px 26px rgba(46, 54, 110, 0.08);
+  }
+
+  header.glass .scrollbar-hide {
+    align-self: center;
+    min-height: 2.75rem;
+    padding: 0.25rem;
+    border: 1px solid var(--liquid-nav-divider);
+    border-radius: var(--liquid-radius-control);
+    background: rgba(255, 255, 255, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .dark header.glass .scrollbar-hide {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  header.glass .scrollbar-hide button {
+    min-height: 2.1rem;
+    padding: 0.38rem 0.875rem;
+    border: 1px solid transparent;
+    border-radius: var(--liquid-radius-control) !important;
+    transform: none !important;
+  }
+
+  header.glass .scrollbar-hide button.text-pink-500 {
+    color: rgb(219, 39, 119) !important;
+    border-color: rgba(236, 72, 153, 0.22);
+    background: rgba(244, 114, 182, 0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.56),
+      0 4px 12px rgba(236, 72, 153, 0.12);
+  }
+
+  .dark header.glass .scrollbar-hide button.text-pink-500 {
+    border-color: rgba(244, 114, 182, 0.28);
+    background: rgba(244, 114, 182, 0.14);
+  }
+}
+
+.mobile-content-shell {
+  width: min(100%, 80rem);
+}
+
+.mobile-feed-grid {
+  --feed-min: clamp(7.8rem, 41vw, 10rem);
+  grid-template-columns: repeat(auto-fill, minmax(var(--feed-min), 1fr));
+  gap: clamp(0.625rem, 2.6vw, 1rem);
+}
+
+.resource-card {
+  min-height: clamp(4.5rem, 18vw, 5.4rem);
+}
+
+.resource-card-title,
+.resource-card-description {
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .mobile-feed-grid {
+    --feed-min: 13.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-feed-grid {
+    --feed-min: 15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .mobile-feed-panel {
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      0 10px 28px rgba(46, 54, 110, 0.08);
+    border-radius: var(--mobile-radius-panel) !important;
+  }
+
+  .resource-card {
+    gap: clamp(0.45rem, 1.8vw, 0.625rem);
+    min-height: clamp(3.9rem, 17.5vw, 4.6rem);
+    padding: clamp(0.55rem, 2.2vw, 0.75rem);
+    border-radius: var(--mobile-radius-card) !important;
+  }
+
+  .resource-card-icon {
+    width: clamp(1.75rem, 8.5vw, 2.25rem);
+    height: clamp(1.75rem, 8.5vw, 2.25rem);
+  }
+
+  .resource-card-title {
+    font-size: var(--mobile-font-title, clamp(0.75rem, 3.25vw, 0.875rem));
+    line-height: 1.18;
+  }
+
+  .resource-card-status {
+    width: 0.375rem;
+    height: 0.375rem;
+    margin-right: 0.25rem;
+  }
+
+  .resource-card-description {
+    display: -webkit-box;
+    margin-top: 0.125rem;
+    overflow: hidden;
+    font-size: var(--mobile-font-sm, clamp(0.66rem, 2.8vw, 0.75rem));
+    line-height: 1.25;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .resource-card-chevron {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-feed-grid {
+    --feed-min: clamp(7.4rem, 40.5vw, 9.5rem);
+  }
+
+  .resource-card {
+    padding: 0.5rem;
+  }
+
+  .resource-card-description {
+    -webkit-line-clamp: 1;
+  }
+}
+
+.liquid-overlay {
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactive-card,
+  .interactive-card:hover {
+    transform: none;
+    transition-duration: 0.01ms;
+  }
+
+  /* 图片加载动画降级：关闭 shimmer 动画（含伪元素扫光层），仅保留静态底色 */
+  .image-loading-shimmer,
+  .skeleton-shimmer {
+    animation: none;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .image-loading-shimmer::after,
+  .skeleton-shimmer::after,
+  .shimmer-premium::after {
+    animation: none;
+    display: none;
+  }
+  .dark .image-loading-shimmer,
+  .dark .skeleton-shimmer {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* 图片淡入降级：直接显示，无 scale 动画 */
+  .image-loaded {
+    opacity: 1;
+    animation: none;
+  }
+
+  .image-error {
+    animation: none;
+  }
+
+  .grid-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  /* 番剧卡片相关接入动画降级 */
+  .anime-card-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .anime-grid-fade-enter {
+    animation: none;
+    opacity: 1;
+  }
+  .anime-toast-enter {
+    animation: none;
+  }
+  .anime-toast-exit {
+    animation: none;
+    opacity: 0;
+  }
+  /* 无限脉动装饰：reduced-motion 下完全停止 */
+  .anime-today-dot {
+    animation: none;
+  }
+  .animate-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  /* 注意：anime-card-collapse / anime-cover-collapse 与 HotContentSection 的 animationend 监听耦合，
+     禁用会导致 collapsingRef 永不复位；收起动画由 hover 触发、0.38s 完成，可接受，故保持原状 */
+}
+
+
+/* ─── 统一搜索组件 (UnifiedSearchView) Container Query ─── */
+.search-view-container {
+  container-type: inline-size;
+  container-name: search-view;
+}
+
+@container search-view (max-width: 640px) {
+  .search-layout-desktop {
+    display: none !important;
+  }
+  .search-layout-mobile {
+    display: block !important;
+  }
+}
+
+@container search-view (min-width: 641px) {
+  .search-layout-desktop {
+    display: flex !important;
+  }
+  .search-layout-mobile {
+    display: none !important;
+  }
+}
+
+/* ─── 搜索面板容器（桌面端） ─── */
+/* 将标签栏 + 搜索框 + 来源行整合为统一毛玻璃面板 */
+.search-panel-container {
+  container-type: inline-size;
+  container-name: search-panel;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.2cqb, 16px);
+  padding: clamp(12px, 2.2cqi, 24px);
+  border-radius: var(--liquid-radius-panel);
+  background: var(--liquid-surface-strong);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 8px 24px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  transition:
+    padding 0.2s ease,
+    gap 0.2s ease;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.search-panel-container::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.34), transparent 35%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.16), transparent 46%);
+  opacity: 0.76;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.search-panel-container:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 12px 32px rgba(31, 38, 135, 0.16);
+}
+
+.dark .search-panel-container {
+  background: var(--liquid-surface-strong);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark .search-panel-container:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 32px rgba(0, 0, 0, 0.42);
+}
+
+/* ─── 搜索面板内子元素自适应缩放 ─── */
+@container search-panel (min-width: 1px) {
+  .search-panel-container .search-tab {
+    padding-inline: clamp(10px, 1.5cqi, 28px);
+    font-size: clamp(0.8125rem, 1.2cqi, 1rem);
+    gap: clamp(4px, 0.6cqi, 10px);
+  }
+
+  .search-panel-container .search-tab svg {
+    width: clamp(14px, 1.2cqi, 18px);
+    height: clamp(14px, 1.2cqi, 18px);
+  }
+
+  .search-panel-container .search-large-input {
+    height: clamp(44px, 5.5cqb, 72px);
+    font-size: clamp(1rem, 2.2cqi, 1.75rem);
+    padding-inline: clamp(16px, 2.5cqi, 32px);
+  }
+
+  .search-panel-container .search-large-input-icon {
+    left: clamp(16px, 2.5cqi, 32px);
+  }
+
+  .search-panel-container .search-large-submit {
+    width: clamp(48px, 6cqi, 80px);
+  }
+
+  .search-panel-container .search-provider {
+    padding-inline: clamp(10px, 1.2cqi, 20px);
+    font-size: clamp(0.75rem, 0.9cqi, 0.875rem);
+  }
+
+  .search-panel-container .search-provider-row {
+    gap: clamp(4px, 0.6cqi, 10px);
+    padding-top: 0 !important;
+  }
+}
+
+/* 面板内标签栏边缘渐变 fade 指示器（溢出时两侧淡出） */
+.search-panel-container .search-tab-bar {
+  position: relative;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 12px,
+    black calc(100% - 12px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 12px,
+    black calc(100% - 12px),
+    transparent 100%
+  );
+}
+
+/* 中等屏幕（641px-1023px）：简化面板，启用 cq 单位 */
+@container search-view (min-width: 641px) and (max-width: 1023px) {
+  .search-panel-container {
+    padding: clamp(8px, 2cqi, 16px);
+    gap: clamp(6px, 1cqb, 12px);
+  }
+}
+
+/* 全桌面端面板样式（≥ 1024px 容器宽度） */
+@container search-view (min-width: 1024px) {
+  .search-panel-container {
+    padding: clamp(16px, 2.5cqi, 32px);
+    gap: clamp(10px, 1.5cqb, 20px);
+  }
+}
+
+/* ─── 纯搜索模式下头部紧凑 ─── */
+/* 搜索页面中头部更紧凑，天气卡片隐藏 */
+.search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 1.5cqi, 1rem);
+  padding-inline: clamp(2px, 0.5cqi, 4px);
+  min-height: clamp(36px, 5cqb, 52px);
+  transition: min-height 0.2s ease, padding 0.2s ease;
+}
+
+.search-header .search-header-weather {
+  display: block;
+}
+
+.mode-page.search-page .search-header .search-header-weather {
+  display: none;
+}
+
+/* 搜索模式下头部控制按钮区域略微缩小间距 */
+.mode-page.search-page .search-header .search-header-controls {
+  gap: clamp(4px, 0.8cqi, 10px);
+}
+
+/* 移动端搜索头部不受影响 */
+@media (max-width: 1023px) {
+  .mode-page.search-page .search-header .search-header-weather {
+    display: block;
+  }
+}
+
+/* ─── 纯搜索页面桌面端视口自适应 ─── */
+.search-only-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.search-only-inner {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding-top: clamp(0.5rem, 4vh, 2rem);
+  /* 右侧 fixed 浮层安全区：默认 0（移动端无浮层遮挡问题） */
+  padding-right: 0;
+}
+
+.search-area {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-form {
+  margin-top: 1rem;
+}
+
+.search-provider-row {
+  padding-top: 1rem;
+}
+
+@media (min-width: 1024px) {
+  /* 桌面端右侧 fixed 浮层（右上返回/设置按钮、右下 FloatingTools、右下主题按钮）安全区。
+     仅施加在内容层，浮层保持 fixed 定位到 viewport；超宽屏由 max-w-[1920px] 兜底。 */
+  :root {
+    --right-safe: clamp(3rem, 4vw, 5rem);
+  }
+
+  .search-only-inner {
+    padding-top: clamp(1rem, 6vh, 2.5rem);
+    padding-bottom: 0;
+    padding-right: var(--right-safe);
+    /* 左侧对称安全区：复用右侧变量以保持视觉居中 */
+    padding-left: var(--right-safe);
+  }
+
+  .search-form {
+    margin-top: 0.75rem;
+  }
+}
+
+.hot-content-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 18rem);
+  /* 移动端底部 padding 确保最后一行卡片不被底部导航/浮层遮挡 */
+  padding-bottom: 5rem;
+}
+
+@media (min-width: 1024px) {
+  .hot-content-area {
+    flex: 1;
+    min-height: 0;
+    max-height: calc(100vh - 16rem);
+    /* 桌面端滚动底部余量 */
+    padding-bottom: clamp(1.5rem, 2vh, 3rem);
+  }
+}
+
+.hot-content-area .glass-panel-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1023px) {
+  /* 防止 iOS 自动缩放（所有 input 默认 16px 以上才不触发） */
+  input, textarea, select {
+    font-size: var(--mobile-font-base) !important;
+  }
+
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* ─── 安全区适配 ─── */
+  body {
+    padding-top: var(--mobile-safe-top, 0px);
+    padding-bottom: var(--mobile-safe-bottom, 0px);
+    padding-left: var(--mobile-safe-left, 0px);
+    padding-right: var(--mobile-safe-right, 0px);
+  }
+
+  header.glass,
+  header.sticky {
+    padding-top: var(--mobile-safe-top, 0px) !important;
+  }
+
+  /* Overlay / Modal 容器 */
+  .liquid-overlay,
+  [class*="modal"],
+  [role="dialog"] {
+    padding-left: var(--mobile-safe-left, 0px);
+    padding-right: var(--mobile-safe-right, 0px);
+    padding-bottom: var(--mobile-safe-bottom, 0px);
+  }
+
+  .search-only-section {
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .search-only-inner {
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  .hot-content-area {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4rem);
+  }
+
+  .hot-content-area .glass-panel-fill {
+    overflow: visible;
+  }
+
+  .hot-card-item {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    gap: 0.5rem;
+    border-radius: var(--mobile-radius-compact) !important;
+  }
+
+  .hot-card-item-cover {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .hot-card-item-title {
+    font-size: var(--mobile-font-sm);
+  }
+
+  .hot-card-item-meta {
+    font-size: var(--mobile-font-xs);
+  }
+}
+
+/* ─── 热门卡片内容自适应缩放 ─── */
+@media (min-width: 1024px) {
+  .hot-card-item {
+    padding-top: clamp(0.25rem, 3.5cqvh, 0.625rem);
+    padding-bottom: clamp(0.25rem, 3.5cqvh, 0.625rem);
+    gap: clamp(0.375rem, 3cqvh, 0.75rem);
+  }
+
+  .hot-card-item-cover {
+    width: clamp(2rem, 9cqvh, 3rem);
+    height: clamp(2rem, 9cqvh, 3rem);
+  }
+
+  .hot-card-item-title {
+    font-size: clamp(0.6875rem, 2.8cqvh, 0.875rem);
+  }
+
+  .hot-card-item-meta {
+    font-size: clamp(0.5625rem, 2.2cqvh, 0.75rem);
+  }
+}
+
+/* ─── 桌面端瀑布流骨架屏 ✨ 新增 ─── */
+.hot-waterfall-skeleton .skeleton-shimmer {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.dark .hot-waterfall-skeleton .skeleton-shimmer {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ─── 搜索界面新组件样式 ─── */
+
+/* 手机端紧凑搜索输入框 — 覆盖 iOS 默认字体缩放 */
+.search-hub-input-mobile {
+  font-size: 16px !important;
+}
+
+/* 底部来源面板背景遮罩动画 */
+.search-source-overlay-enter {
+  opacity: 0;
+}
+.search-source-overlay-enter-active {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.search-source-overlay-exit {
+  opacity: 1;
+}
+.search-source-overlay-exit-active {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* 桌面端大搜索框聚焦动效 */
+.search-hub-input:focus {
+  box-shadow:
+    0 0 0 3px rgba(236, 72, 153, 0.25),
+    0 8px 24px rgba(236, 72, 153, 0.12) !important;
+}
+
+.dark .search-hub-input:focus {
+  box-shadow:
+    0 0 0 3px rgba(244, 114, 182, 0.3),
+    0 8px 28px rgba(244, 114, 182, 0.15) !important;
+}
+
+/* 桌面端标签选中态底部指示器 */
+.search-tab-active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 3px;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* ─── 番剧卡片：固定行高 + 绝对定位展开 ─── */
+.anime-grid {
+  grid-auto-rows: 48px;
+  gap: 6px;
+  padding-top: 6px;
+  padding-right: 24px;
+  padding-left: 0.5rem;
+}
+
+.anime-card-wrapper {
+  position: relative;
+  height: 48px;
+  /* 固定高度，hover 不影响布局 */
+}
+
+.anime-card-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transition: box-shadow 0.35s ease;
+  /* transform 由 JS 直接操作 DOM，不走 CSS transition；will-change 在悬停期按需挂载 */
+}
+
+/* 悬停期才把倾斜卡片提升为合成层，结束移除，避免整页常驻 will-change */
+.anime-card-wrapper:hover .anime-card-inner,
+.anime-card-wrapper:hover .anime-card-expanded {
+  will-change: transform, box-shadow;
+}
+
+/* 展开态：绝对定位，向下扩展，CSS transition 驱动展开/收起动画 */
+.anime-card-expanded {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 8px;
+  transform-origin: center top;
+  transform-style: preserve-3d;
+  /* 默认收起态 */
+  opacity: 0;
+  transform: scaleY(0.35) scaleX(0.92);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition:
+    opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.35s ease;
+}
+
+/* hover 时展开：弹簧过冲 + 淡入 */
+.anime-card-wrapper:hover .anime-card-expanded {
+  opacity: 1;
+  transform: scaleY(1) scaleX(1);
+  pointer-events: auto;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(236, 72, 153, 0.12);
+}
+
+/* 展开卡片内部图片缩放，与外层展开动画错开节奏 */
+.anime-card-expanded .anime-expand-cover {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
+  transform: scale(1.08);
+}
+
+.anime-card-wrapper:hover .anime-card-expanded .anime-expand-cover {
+  transform: scale(1);
+}
+
+.anime-card-compact-title {
+  transition: color 0.2s ease;
+}
+
+.anime-card-wrapper:hover .anime-card-compact-title {
+  color: rgb(236 72 153);
+}
+
+.dark .anime-card-wrapper:hover .anime-card-compact-title {
+  color: rgb(244 114 182);
+}
+
+/* ─── 番剧卡片入场动画 ─── */
+@keyframes anime-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.anime-card-enter {
+  animation: anime-card-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* 入场错峰延迟由 CSS 变量驱动（unitless 整数 → ms），避免每张卡片每次渲染新建 animationDelay 对象 */
+  animation-delay: calc(var(--enter-delay, 0) * 1ms);
+}
+
+/* ─── 番剧卡片收起动画 ─── */
+/* 两段式：先微伸(1.04) → 再快速缩回(0.35/0.92)，ease-out 干脆利落 */
+@keyframes anime-card-collapse {
+  0% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(1);
+  }
+  30% {
+    opacity: 0.85;
+    transform: scaleY(1.04) scaleX(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(0.35) scaleX(0.92);
+  }
+}
+
+/* 收起时禁用 transition，由 keyframe 动画完全接管 */
+.anime-card-collapsing .anime-card-expanded {
+  animation: anime-card-collapse 0.38s ease-out forwards;
+  transition: none !important;
+}
+
+/* 封面收起：先微放大再缩小，错帧 30ms */
+@keyframes anime-cover-collapse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.anime-card-collapsing .anime-expand-cover {
+  animation: anime-cover-collapse 0.42s ease-out 0.03s both;
+  transition: none !important;
+}
+
+/* ─── 番剧网格切换过渡 ─── */
+.anime-grid-fade-enter {
+  animation: anime-grid-fade-in 0.3s ease both;
+}
+
+@keyframes anime-grid-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── 今日指示器脉动 ─── */
+@keyframes today-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.anime-today-dot {
+  animation: today-pulse 2s ease-in-out infinite;
+}
+
+/* ─── 星期选择器按钮基础 ─── */
+.anime-day-btn {
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.anime-day-btn:hover {
+  transform: translateY(-1px);
+}
+
+.anime-day-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* ─── 番剧订阅按钮 ─── */
+.anime-subscribe-btn {
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.anime-subscribe-btn:hover {
+  transform: scale(1.1);
+}
+
+.anime-subscribe-btn:active {
+  transform: scale(0.95);
+}
+
+/* ─── 番剧更新通知 Toast ─── */
+.anime-toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+  max-width: 20rem;
+}
+
+@keyframes anime-toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes anime-toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+.anime-toast-enter {
+  animation: anime-toast-slide-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anime-toast-exit {
+  animation: anime-toast-slide-out 0.35s ease-in both;
+}
+
+@media (max-width: 640px) {
+  .anime-toast-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   浮动操作按钮 (FloatingTools) 自适应
+   ═══════════════════════════════════════════════════ */
+
+.floating-tools {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  transition: bottom 0.2s ease, right 0.2s ease;
+}
+
+.floating-tools.floating-tools-mobile {
+  flex-direction: row;
+  gap: var(--mobile-fab-gap, 10px);
+  bottom: calc(var(--mobile-bottom-nav-height, 56px) + var(--mobile-safe-bottom, 0px) + var(--mobile-fab-bottom-offset, 12px));
+  right: var(--mobile-content-px, 12px);
+}
+
+.floating-tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: var(--liquid-surface-strong);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 4px 16px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  color: rgba(100, 116, 139, 0.85);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.floating-tools-mobile .floating-tool-btn {
+  width: var(--mobile-fab-size, 40px);
+  height: var(--mobile-fab-size, 40px);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 2px 8px var(--liquid-shadow);
+}
+
+.floating-tool-btn:hover {
+  color: rgba(236, 72, 153, 0.9);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 6px 20px rgba(236, 72, 153, 0.15);
+}
+
+.floating-tool-btn:active {
+  transform: scale(0.93);
+  transition: transform 0.08s ease;
+}
+
+.floating-tool-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ═══════════════════════════════════════════════════
+   移动端触感反馈 — :active 缩放（仅 touch 设备）
+   ═══════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  button:active:not(.no-touch-scale),
+  a:active:not(.no-touch-scale),
+  .interactive-card:active,
+  .resource-card:active {
+    transform: scale(0.97);
+    transition: transform 0.12s ease, background-color 0.12s ease;
+  }
+
+  .liquid-chip:active,
+  .search-provider:active,
+  .search-tab:active {
+    transform: scale(0.96);
+    transition: transform 0.12s ease;
+  }
+
+  .hot-card-item:active {
+    transform: scale(0.98);
+    transition: transform 0.12s ease;
+  }
+
+  .glass-card:active {
+    background: rgba(255, 255, 255, 0.38) !important;
+    transform: scale(0.98);
+    transition: transform 0.12s ease, background-color 0.1s ease;
+  }
+
+  .dark .glass-card:active {
+    background: rgba(51, 65, 85, 0.42) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   移动端底部导航栏 (MobileBottomNav)
+   ═══════════════════════════════════════════════════ */
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--mobile-bottom-nav-z, 45);
+  display: none; /* 默认隐藏，仅在移动端显示 */
+  padding-bottom: var(--mobile-safe-bottom, 0px);
+  background: var(--liquid-surface-strong);
+  border-top: 1px solid var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 -4px 16px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.mobile-bottom-nav-inner {
+  display: flex;
+  align-items: stretch;
+  height: var(--mobile-bottom-nav-height, 56px);
+}
+
+.mobile-bottom-nav-tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  color: var(--liquid-accent, rgba(236, 72, 153, 0.78));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
+  outline: none;
+}
+
+.mobile-bottom-nav-tab:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+/* 非活跃态淡色 */
+.mobile-bottom-nav-tab:not(.active) {
+  color: rgba(100, 116, 139, 0.7);
+}
+
+.dark .mobile-bottom-nav-tab:not(.active) {
+  color: rgba(148, 163, 184, 0.6);
+}
+
+.mobile-bottom-nav-icon {
+  width: 20px;
+  height: 20px;
+  transition: stroke-width 0.15s ease;
+}
+
+.mobile-bottom-nav-label {
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.mobile-bottom-nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+/* 溢出菜单面板 */
+.mobile-bottom-nav-overflow {
+  position: fixed;
+  bottom: calc(var(--mobile-bottom-nav-height, 56px) + var(--mobile-safe-bottom, 0px) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: calc(var(--mobile-bottom-nav-z, 45) + 1);
+  width: min(calc(100vw - 2rem), 20rem);
+  max-height: 50vh;
+  overflow-y: auto;
+  border-radius: var(--mobile-radius-panel, 22px);
+  padding: 8px 0;
+  animation: mobile-overflow-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mobile-overflow-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.mobile-bottom-nav-overflow-header {
+  padding: 8px 16px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(100, 116, 139, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .mobile-bottom-nav-overflow-header {
+  color: rgba(148, 163, 184, 0.5);
+}
+
+.mobile-bottom-nav-overflow-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(71, 85, 105, 0.9);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dark .mobile-bottom-nav-overflow-item {
+  color: rgba(203, 213, 225, 0.85);
+}
+
+.mobile-bottom-nav-overflow-item:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .mobile-bottom-nav-overflow-item:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mobile-bottom-nav-overflow-item.active {
+  color: var(--liquid-accent, rgba(236, 72, 153, 0.78));
+}
+
+/* 显示移动端导航栏 */
+@media (max-width: 1023px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  /* 内容区底部留出导航栏 + 安全区高度 */
+  .mode-page.nav-page {
+    padding-bottom: calc(var(--mobile-bottom-nav-height, 56px) + 8px);
+  }
+
+  /* ─── ACG 页面移动端间距 ─── */
+  .max-w-7xl.mx-auto {
+    padding-left: var(--mobile-content-px, 12px) !important;
+    padding-right: var(--mobile-content-px, 12px) !important;
+    padding-top: var(--mobile-content-py, 8px) !important;
+    padding-bottom: calc(var(--mobile-content-py, 8px) + var(--mobile-bottom-nav-height, 56px) + 8px) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   搜索历史面板
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 面板整体 ── */
+.search-history-section {
+  width: 100%;
+}
+
+.search-history-panel {
+  width: 100%;
+}
+
+/* ── 桌面端标题栏 ── */
+.search-history-header {
+  user-select: none;
+}
+
+/* ── 记录列表容器 ── */
+.search-history-list {
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+.search-history-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.search-history-list::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.search-history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── 单条记录 ── */
+.search-history-item {
+  transition:
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.search-history-item:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.dark .search-history-item:hover {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+/* ── 空状态 ── */
+.search-history-empty {
+  user-select: none;
+}
+
+/* ── 移动端折叠/清空 ── */
+.search-history-collapse-toggle {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.search-history-mobile-clear {
+  display: flex;
+}
+
+/* ── 搜索面板容器内嵌历史面板时的微调 ── */
+.search-panel-container .search-history-panel {
+  padding-inline: 0;
+}
+
+.search-panel-container .search-history-header {
+  padding-inline: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ActionSheet — 底部模态面板
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes sheet-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transform: translateY(100%);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.action-sheet-enter {
+  animation: sheet-slide-up var(--duration-sheet-enter) var(--ease-spring) both;
+}
+
+.action-sheet-exit {
+  transform: translateY(100%);
+  transition: transform var(--duration-sheet-exit) var(--ease-out);
+}
+
+.action-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background-color: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.action-sheet-backdrop-enter {
+  animation: sheet-fade-in var(--duration-sheet-enter) ease both;
+}
+
+.action-sheet-backdrop-exit {
+  opacity: 0;
+  transition: opacity var(--duration-sheet-exit) ease;
+}
+
+.action-sheet-container {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.action-sheet-items {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+.action-sheet-items::-webkit-scrollbar {
+  width: 3px;
+}
+
+.action-sheet-items::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.action-sheet-group-header {
+  user-select: none;
+}
+
+.action-sheet-item {
+  outline: none;
+}
+
+.action-sheet-item:focus-visible {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+}
+
+.dark .action-sheet-item:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-sheet-enter {
+    animation: none !important;
+    transform: translateY(0) !important;
+  }
+  .action-sheet-exit {
+    transition-duration: 0ms !important;
+    transform: translateY(100%) !important;
+  }
+  .action-sheet-backdrop-enter {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .action-sheet-backdrop-exit {
+    transition-duration: 0ms !important;
+    opacity: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DropdownMenu — 锚定下拉菜单
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes menu-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dropdown-menu-container {
+  position: relative;
+}
+
+.dropdown-menu-panel {
+  position: absolute;
+  z-index: 45;
+  min-width: 12rem;
+  max-width: calc(100vw - 2rem);
+  max-height: 50vh;
+  overflow-y: auto;
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+  border-radius: var(--liquid-radius-card);
+  background: var(--liquid-surface-strong);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 8px 24px var(--liquid-shadow),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+}
+
+.dropdown-menu-panel-enter {
+  animation: menu-scale-in var(--duration-dropdown-enter) var(--ease-spring) both;
+  pointer-events: auto;
+}
+
+.dropdown-menu-panel-exit {
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity var(--duration-dropdown-exit) var(--ease-out),
+    transform var(--duration-dropdown-exit) var(--ease-out);
+  pointer-events: none;
+}
+
+.dropdown-menu-item {
+  outline: none;
+  cursor: pointer;
+}
+
+.dropdown-menu-item:focus-visible {
+  background: rgba(236, 72, 153, 0.06);
+}
+
+.dark .dropdown-menu-item:focus-visible {
+  background: rgba(244, 114, 182, 0.1);
+}
+
+.dropdown-menu-divider {
+  margin-inline: 0.75rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.dark .dropdown-menu-divider {
+  border-top-color: rgba(148, 163, 184, 0.1);
+}
+
+.dropdown-menu-section-header {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ─── 统一选择器 trigger 按钮 ─── */
+.search-select-trigger {
+  background: var(--liquid-surface);
+  border: 1px solid var(--liquid-stroke);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+.search-select-trigger:hover {
+  background: rgba(255, 255, 255, 0.46);
+  border-color: rgba(255, 255, 255, 0.88);
+}
+
+.dark .search-select-trigger {
+  background: rgba(25, 34, 58, 0.38);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.dark .search-select-trigger:hover {
+  background: rgba(51, 65, 85, 0.46);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-menu-panel-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    pointer-events: auto;
+  }
+  .dropdown-menu-panel-exit {
+    transition-duration: 0ms !important;
+    opacity: 0 !important;
+    transform: scale(0.95) !important;
+    pointer-events: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MobileHotFeed — 手机端单列信息流
+   ═══════════════════════════════════════════════════════════ */
+
+.mobile-hot-feed {
+  width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+.mobile-hot-feed::-webkit-scrollbar {
+  width: 3px;
+}
+
+.mobile-hot-feed::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.mobile-hot-feed-card-skeleton {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.dark .mobile-hot-feed-card-skeleton {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+@supports not (content-visibility: auto) {
+  .mobile-hot-feed-card {
+    content-visibility: visible !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   圆角裁切修复：overflow-hidden + 大圆角 裁切角落按钮/内容
+   限定管理界面内，不破坏弹窗/天气组件圆角
+   ═══════════════════════════════════════════════════ */
+
+/* 管理界面内：提交管理项（展开后裁切）+ 站点列表 + UrlManager 列表 */
+.max-w-4xl.mx-auto .overflow-hidden.rounded-2xl,
+.max-w-4xl.mx-auto .overflow-hidden.rounded-\[2rem\] {
+  border-radius: 8px !important;
+}
+
+/* ACG 图片卡片专用（覆盖 BangumiPage/MangaPage/PixivPage/GalgamePage） */
+.liquid-app .acg-image-card {
+  border-radius: 8px;
+}
+
+/* 热点瀑布流卡片 */
+.liquid-app .mobile-hot-feed-card {
+  border-radius: 8px;
+}
+
+/* 管理界面面板保持 liquid-panel 默认圆角（不受 rounded-[2rem] 覆盖影响） */
+.liquid-panel.rounded-\[2rem\]:not(.overflow-hidden) {
+  border-radius: var(--liquid-radius-panel);
+}
+
+/* ═══════════════════════════════════════════════════
+   liquid-chip 圆角拉伸修复：有 !important 的 pill 圆角(9999px) 导致
+   宽扁 chip 在管理界面拉伸变形
+   ═══════════════════════════════════════════════════ */
+
+/* 管理界面标签导航栏：宽而扁的 chip 用 card 圆角替代 pill */
+.max-w-4xl.mx-auto > .liquid-chip {
+  border-radius: var(--liquid-radius-card) !important;
+}
+
+/* 管理界面面板内用作容器的 liquid-chip（设置项、特征卡片等）
+   由 9999px pill 改为 card 圆角，避免拉伸变形 */
+.max-w-4xl.mx-auto .liquid-panel .liquid-chip:not(button):not(a) {
+  border-radius: var(--liquid-radius-card) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   文字对比度优化：提高日间/夜间模式可读性
+   ═══════════════════════════════════════════════════
+
+   日间模式背景 #e7eef9 → slate-400(#94a3b8) 对比度仅 2.8:1 ❌
+   改进后 slate-400→#64748b(4.6:1), slate-500→#475569(5.8:1)
+
+   夜间模式背景 #0f172a → slate-500(#64748b) 对比度仅 4.1:1 ❌
+   改进后 slate-500→#94a3b8(6.7:1), slate-600→#94a3b8(6.7:1)
+*/
+
+/* 日间模式加深正文色（.dark 在 <html> 上） */
+:root:not(.dark) .text-slate-400 {
+  color: #64748b !important;
+}
+:root:not(.dark) .text-slate-500 {
+  color: #475569 !important;
+}
+:root:not(.dark) .text-slate-600 {
+  color: #334155 !important;
+}
+
+/* 夜间模式提高浅色文字可见度 */
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+.dark .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 壁纸背景叠加效果 — 纯 CSS，body::after 实现
+   ═══════════════════════════════════════════════════════════ */
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 100%),
+    rgba(10, 15, 30, 0.04);
+  background-blend-mode: overlay, normal, normal;
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-size: 256px 256px, auto, auto;
+}
+
+.dark body::after {
+  background:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.50) 100%),
+    rgba(5, 10, 25, 0.10);
+  background-blend-mode: overlay, normal, normal;
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-size: 256px 256px, auto, auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    background:
+      radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 100%),
+      rgba(10, 15, 30, 0.04);
+    background-blend-mode: normal, normal;
+  }
+  .dark body::after {
+    background:
+      radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.50) 100%),
+      rgba(5, 10, 25, 0.10);
+    background-blend-mode: normal, normal;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ✨ 炫技特效 — 增强视觉体验（UI 层）
+   ═══════════════════════════════════════════════════════════ */
+
+/* 性能优化：渐变边框静态化。
+   原实现用 @property --gradient-angle 驱动 conic-gradient 旋转（4s/圈），
+   @property 动画每帧触发主线程 style recalc + 大面积 mask paint；
+   且 4s 一圈的旋转肉眼几乎不可感知。保留静态渐变描边，视觉零差异。 */
+.gradient-border-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.gradient-border-card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(236, 72, 153, 0.6),
+    rgba(168, 85, 247, 0.6),
+    rgba(59, 130, 246, 0.6),
+    rgba(236, 72, 153, 0.6)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glow-border {
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 0 20px rgba(236, 72, 153, 0.1),
+    0 0 40px rgba(236, 72, 153, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-border:hover {
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 0 30px rgba(236, 72, 153, 0.2),
+    0 0 60px rgba(236, 72, 153, 0.1);
+}
+
+/* ── 3D 卡片倾斜 ── */
+.card-3d-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.card-3d-layer-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--card-3d-glow-x, 50%) var(--card-3d-glow-y, 50%),
+    rgba(236, 72, 153, 0.15),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.interactive-card:hover .card-3d-layer-glow {
+  opacity: 1;
+}
+
+/* ── 滚动触发动画 ── */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px) scale(0.97);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.reveal-on-scroll.reveal-delay-1 { transition-delay: 80ms; }
+.reveal-on-scroll.reveal-delay-2 { transition-delay: 160ms; }
+.reveal-on-scroll.reveal-delay-3 { transition-delay: 240ms; }
+.reveal-on-scroll.reveal-delay-4 { transition-delay: 320ms; }
+.reveal-on-scroll.reveal-delay-5 { transition-delay: 400ms; }
+
+/* ── 磁性按钮 ── */
+.magnetic-btn {
+  position: relative;
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* ── 点击涟漪 ── */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ripple-btn .ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.3), transparent 70%);
+  transform: scale(0);
+  animation: ripple-anim 0.6s ease-out forwards;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes ripple-anim {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ── 金属 shimmer ── */
+.shimmer-premium {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.shimmer-premium::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.08) 55%,
+    transparent 65%
+  );
+  transform: translateX(100%);
+  /* 复用合成器扫光动画（transform），避免 background-position 每帧主线程重算 */
+  animation: shimmer-sweep 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dark .shimmer-premium::after {
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 55%,
+    transparent 65%
+  );
+}
+
+/* ── 页面转场 ── */
+.page-enter {
+  animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ── 按钮脉冲 ── */
+.pulse-attract {
+  animation: pulse-attract 2s ease-in-out infinite;
+}
+
+@keyframes pulse-attract {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(236, 72, 153, 0); }
+}
+
+/* ── 文字渐变 ── */
+.text-gradient-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ec4899 0%,
+    #a855f7 25%,
+    #ec4899 50%,
+    #a855f7 75%,
+    #ec4899 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  /* 性能优化：移除 text-shimmer 动画。
+     渐变以 200% 宽渲染且 0%/50%/100% 颜色对称，文字窗口内图案不随
+     background-position 变化（位移恒为 0 的视觉等价），纯每帧 recalc 开销。 */
+}
+
+/* ── 加载环 ── */
+.loading-ring {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid rgba(236, 72, 153, 0.1);
+  border-top-color: #ec4899;
+  animation: spin-ring 0.8s linear infinite;
+}
+
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
+}

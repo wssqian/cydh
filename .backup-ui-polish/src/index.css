@@ -1,0 +1,1460 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-shimmer: shimmer 1.5s infinite;
+  --breakpoint-3xl: 1920px;
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
+
+/* ─── Aspect-Ratio 降级 ─── */
+
+/* 浏览器支持 aspect-ratio 时取消固定高度，由 inline style 控制尺寸 */
+@supports (aspect-ratio: 1) {
+  .pixiv-card-image-wrap {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
+
+/* 浏览器不支持 aspect-ratio 时回退到固定高度 */
+@supports not (aspect-ratio: 1) {
+  .pixiv-card-image-wrap {
+    height: 10rem;
+  }
+}
+@media (min-width: 640px) {
+  @supports not (aspect-ratio: 1) {
+    .pixiv-card-image-wrap {
+      height: 14rem;
+    }
+  }
+}
+
+/* ─── 图片加载动画 ─── */
+
+/* 图片加载中 shimmer 骨架 */
+.image-loading-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.03) 30%,
+    rgba(255, 255, 255, 0.22) 48%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.22) 52%,
+    rgba(255, 255, 255, 0.03) 70%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.dark .image-loading-shimmer {
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0.08) 48%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.08) 52%,
+    rgba(255, 255, 255, 0.02) 70%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* 图片加载完成淡入 */
+.image-loaded {
+  opacity: 0;
+  animation: image-fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes image-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 图片加载失败占位淡入 */
+.image-error {
+  animation: image-error-in 0.15s ease-out both;
+}
+
+@keyframes image-error-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Grid 布局入场动画（Tab 切换淡入） ─── */
+
+.grid-enter {
+  animation: grid-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes grid-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 页面级加载骨架 shimmer（与卡片加载分开控制） */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0.20) 48%,
+    rgba(255, 255, 255, 0.26) 50%,
+    rgba(255, 255, 255, 0.20) 52%,
+    rgba(255, 255, 255, 0.02) 70%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.01) 0%,
+    rgba(255, 255, 255, 0.01) 30%,
+    rgba(255, 255, 255, 0.06) 48%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.06) 52%,
+    rgba(255, 255, 255, 0.01) 70%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+
+/* 入口动画 animation utilities (equivalent to tailwindcss-animate) */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+               scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1))
+               rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
+               scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1))
+               rotate(var(--tw-exit-rotate, 0));
+  }
+}
+
+.animate-in {
+  animation-name: enter;
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+  --tw-enter-rotate: initial;
+}
+
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+.slide-in-from-top-4 {
+  --tw-enter-translate-y: -1rem;
+}
+
+.slide-in-from-bottom-4 {
+  --tw-enter-translate-y: 1rem;
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}
+:root {
+  --liquid-surface: rgba(255, 255, 255, 0.27);
+  --liquid-surface-strong: rgba(255, 255, 255, 0.4);
+  --liquid-stroke: rgba(255, 255, 255, 0.68);
+  --liquid-highlight: rgba(255, 255, 255, 0.88);
+  --liquid-shadow: rgba(46, 54, 110, 0.12);
+  --liquid-accent: rgba(236, 72, 153, 0.78);
+  --liquid-accent-soft: rgba(244, 114, 182, 0.22);
+  --liquid-nav-surface: rgba(255, 255, 255, 0.36);
+  --liquid-nav-surface-top: rgba(255, 255, 255, 0.3);
+  --liquid-nav-divider: rgba(255, 255, 255, 0.58);
+  --liquid-radius-panel: 30px;
+  --liquid-radius-card: 26px;
+  --liquid-radius-compact: 20px;
+  --liquid-radius-control: 9999px;
+  --liquid-nav-join-height: 60px;
+  --liquid-nav-join-width: 32px;
+}
+
+.dark {
+  --liquid-surface: rgba(13, 20, 38, 0.24);
+  --liquid-surface-strong: rgba(25, 34, 58, 0.44);
+  --liquid-stroke: rgba(255, 255, 255, 0.16);
+  --liquid-highlight: rgba(255, 255, 255, 0.24);
+  --liquid-shadow: rgba(0, 0, 0, 0.4);
+  --liquid-accent-soft: rgba(236, 72, 153, 0.22);
+  --liquid-nav-surface: rgba(16, 24, 42, 0.42);
+  --liquid-nav-surface-top: rgba(16, 24, 42, 0.34);
+  --liquid-nav-divider: rgba(255, 255, 255, 0.14);
+}
+
+body {
+  background-color: #e7eef9;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.client-background-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+#root {
+  position: relative;
+  z-index: 2;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.34), transparent 35%),
+    radial-gradient(circle at 82% 20%, rgba(236, 72, 153, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(226, 232, 255, 0.24), rgba(255, 255, 255, 0.07));
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark body::before {
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 255, 255, 0.08), transparent 35%),
+    radial-gradient(circle at 82% 20%, rgba(236, 72, 153, 0.14), transparent 34%),
+    rgba(2, 6, 23, 0.7);
+}
+
+.dark body {
+  background-color: #0f172a;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.glass,
+.glass-card,
+.liquid-panel {
+  isolation: isolate;
+  background: var(--liquid-surface);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 16px var(--liquid-shadow);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.liquid-app {
+  --pointer-x: -300px;
+  --pointer-y: -300px;
+  isolation: isolate;
+  position: relative;
+}
+
+.liquid-pointer-light {
+  position: fixed;
+  z-index: 60;
+  left: 0;
+  top: 0;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 9999px;
+  pointer-events: none;
+  opacity: 0;
+  contain: paint;
+  transform: translate3d(calc(var(--pointer-x) - 50%), calc(var(--pointer-y) - 50%), 0);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), rgba(244, 114, 182, 0.05) 34%, transparent 68%);
+  transition: transform 0.09s ease-out;
+}
+
+.liquid-app[data-pointer-active="true"] .liquid-pointer-light {
+  opacity: 1;
+}
+
+.liquid-app :is(button, a, input, select, textarea, .glass, .glass-card, .liquid-panel, .liquid-chip, .liquid-button, .liquid-button-primary) {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.22s ease,
+    background-color 0.22s ease,
+    filter 0.22s ease;
+}
+
+.liquid-app :is(button, a):not(.interactive-card):hover {
+  filter: brightness(1.03);
+}
+
+.liquid-app :is(button, a):not(.interactive-card):active {
+  filter: brightness(0.98);
+  transform: translateY(1px) scale(0.995);
+}
+
+.liquid-app :is(input, select, textarea):hover {
+  border-color: rgba(255, 255, 255, 0.82);
+}
+
+.liquid-app :is(.glass, .glass-card, .liquid-panel, .liquid-chip):hover {
+  border-color: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 6px 20px rgba(31, 38, 135, 0.14);
+}
+
+.mode-surface {
+  backface-visibility: hidden;
+  will-change: transform;
+  overflow-x: hidden;
+  overflow-y: auto;
+  contain: layout style;
+}
+
+.mode-surface.search-mode {
+  contain: none;
+  overflow: hidden;
+}
+
+.glass-card,
+.liquid-panel {
+  position: relative;
+  background: var(--liquid-surface-strong);
+  border-radius: var(--liquid-radius-panel);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: auto;
+}
+
+.glass::before,
+.glass-card::before,
+.liquid-panel::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.34), transparent 35%),
+    linear-gradient(112deg, rgba(255, 255, 255, 0.16), transparent 46%);
+  opacity: 0.76;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.liquid-app[data-pointer-active="true"] :is(.glass-card, .liquid-panel):hover::before {
+  opacity: 0.92;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 6px 20px rgba(31, 38, 135, 0.15);
+}
+
+.interactive-card {
+  --card-pointer-x: 50%;
+  --card-pointer-y: 20%;
+  --card-rotate-x: 0deg;
+  --card-rotate-y: 0deg;
+  transform:
+    perspective(850px)
+    rotateX(var(--card-rotate-x))
+    rotateY(var(--card-rotate-y));
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.16s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.interactive-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--card-pointer-x) var(--card-pointer-y),
+    rgba(255, 255, 255, 0.48),
+    rgba(255, 255, 255, 0.1) 18%,
+    transparent 48%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.interactive-card:hover {
+  transform:
+    perspective(850px)
+    rotateX(var(--card-rotate-x))
+    rotateY(var(--card-rotate-y));
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-highlight),
+    0 8px 24px rgba(31, 38, 135, 0.17);
+}
+
+.interactive-card:hover::after {
+  opacity: 1;
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.46);
+  border-color: rgba(255, 255, 255, 0.88);
+}
+.dark .glass-hover:hover {
+  background: rgba(51, 65, 85, 0.46);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.liquid-input {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.35), 0 4px 12px rgba(31, 38, 135, 0.05);
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark .liquid-input {
+  background: rgba(15, 23, 42, 0.28);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.liquid-input:focus {
+  outline: none;
+  border-color: rgba(244, 114, 182, 0.62);
+  box-shadow: 0 0 0 4px var(--liquid-accent-soft), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.liquid-app :is(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  border-color: rgba(244, 114, 182, 0.68);
+  box-shadow: 0 0 0 4px var(--liquid-accent-soft), inset 0 1px 0 var(--liquid-highlight), 0 0 0 0 transparent;
+}
+
+.liquid-button,
+.liquid-button-primary {
+  border-radius: var(--liquid-radius-control);
+  border: 1px solid var(--liquid-stroke);
+  box-shadow: inset 0 1px 0 var(--liquid-highlight), 0 4px 12px rgba(31, 38, 135, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.liquid-button {
+  background: var(--liquid-surface);
+}
+
+.liquid-button-primary {
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.88), rgba(217, 70, 239, 0.72));
+  color: white;
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.liquid-button:hover,
+.liquid-button-primary:hover {
+  box-shadow: inset 0 1px 0 var(--liquid-highlight), 0 6px 16px rgba(236, 72, 153, 0.18);
+}
+
+.liquid-button:disabled,
+.liquid-button-primary:disabled {
+  opacity: 0.55;
+  transform: none;
+}
+
+.liquid-chip {
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: var(--liquid-radius-control);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+.liquid-app :is(
+  button,
+  input,
+  select,
+  textarea,
+  .liquid-button,
+  .liquid-button-primary,
+  .liquid-chip,
+  .search-tab,
+  .search-provider,
+  .hot-card-item,
+  .hot-card-item-cover,
+  .resource-card-icon
+) {
+  border-radius: var(--liquid-radius-control) !important;
+}
+
+.liquid-app :is(
+  .mobile-feed-panel,
+  .resource-card,
+  .hot-card-container,
+  .glass-panel-fill > .liquid-panel,
+  .liquid-overlay > .liquid-panel
+) {
+  border-radius: var(--liquid-radius-panel) !important;
+}
+
+.liquid-app :is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-\[1\.5rem\], .rounded-\[2rem\]) {
+  border-radius: var(--liquid-radius-card);
+}
+
+.liquid-app .acg-image-card {
+  border-radius: 1rem !important;
+}
+
+.search-tab {
+  position: relative;
+}
+
+aside.glass {
+  background: var(--liquid-nav-surface);
+  border-right: 1px solid var(--liquid-nav-divider);
+  border-radius: 0 var(--liquid-radius-panel) var(--liquid-radius-panel) 0 !important;
+}
+
+header.glass {
+  background: var(--liquid-nav-surface-top);
+  border-bottom-color: var(--liquid-nav-divider);
+  border-radius: 0 0 var(--liquid-radius-panel) var(--liquid-radius-panel) !important;
+}
+
+aside.glass h3 {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  margin-left: 0.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(244, 114, 182, 0.2);
+  border-radius: var(--liquid-radius-control);
+  background: var(--liquid-accent-soft);
+  color: rgb(219, 39, 119) !important;
+}
+
+aside.glass a[href^="/category/"] {
+  min-height: 2.25rem;
+  border-radius: var(--liquid-radius-control) !important;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --liquid-nav-join-height: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  aside.glass {
+    overflow: visible;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: var(--liquid-radius-panel) !important;
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      10px 0 26px rgba(46, 54, 110, 0.08);
+  }
+
+  aside.glass::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: calc(-1 * var(--liquid-nav-join-width));
+    z-index: 0;
+    width: var(--liquid-nav-join-width);
+    height: var(--liquid-nav-join-height);
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--liquid-nav-surface), var(--liquid-nav-surface-top));
+    border-bottom: 1px solid var(--liquid-nav-divider);
+    border-bottom-right-radius: var(--liquid-radius-panel);
+    box-shadow: 12px 0 22px rgba(46, 54, 110, 0.06);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+  }
+
+  .dark aside.glass::after {
+    box-shadow: 12px 0 28px rgba(0, 0, 0, 0.22);
+  }
+
+  header.glass {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      0 10px 26px rgba(46, 54, 110, 0.08);
+  }
+
+  header.glass .scrollbar-hide {
+    align-self: center;
+    min-height: 2.75rem;
+    padding: 0.25rem;
+    border: 1px solid var(--liquid-nav-divider);
+    border-radius: var(--liquid-radius-control);
+    background: rgba(255, 255, 255, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .dark header.glass .scrollbar-hide {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  header.glass .scrollbar-hide button {
+    min-height: 2.1rem;
+    padding: 0.38rem 0.875rem;
+    border: 1px solid transparent;
+    border-radius: var(--liquid-radius-control) !important;
+    transform: none !important;
+  }
+
+  header.glass .scrollbar-hide button.text-pink-500 {
+    color: rgb(219, 39, 119) !important;
+    border-color: rgba(236, 72, 153, 0.22);
+    background: rgba(244, 114, 182, 0.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.56),
+      0 4px 12px rgba(236, 72, 153, 0.12);
+  }
+
+  .dark header.glass .scrollbar-hide button.text-pink-500 {
+    border-color: rgba(244, 114, 182, 0.28);
+    background: rgba(244, 114, 182, 0.14);
+  }
+}
+
+.mobile-content-shell {
+  width: min(100%, 80rem);
+}
+
+.mobile-feed-grid {
+  --feed-min: clamp(7.8rem, 41vw, 10rem);
+  grid-template-columns: repeat(auto-fill, minmax(var(--feed-min), 1fr));
+  gap: clamp(0.625rem, 2.6vw, 1rem);
+}
+
+.resource-card {
+  min-height: clamp(4.5rem, 18vw, 5.4rem);
+}
+
+.resource-card-title,
+.resource-card-description {
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .mobile-feed-grid {
+    --feed-min: 13.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-feed-grid {
+    --feed-min: 15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .mobile-feed-panel {
+    box-shadow:
+      inset 0 1px 0 var(--liquid-highlight),
+      0 10px 28px rgba(46, 54, 110, 0.08);
+  }
+
+  .resource-card {
+    gap: clamp(0.45rem, 1.8vw, 0.625rem);
+    min-height: clamp(3.9rem, 17.5vw, 4.6rem);
+    padding: clamp(0.55rem, 2.2vw, 0.75rem);
+    border-radius: 1rem;
+  }
+
+  .resource-card-icon {
+    width: clamp(1.75rem, 8.5vw, 2.25rem);
+    height: clamp(1.75rem, 8.5vw, 2.25rem);
+  }
+
+  .resource-card-title {
+    font-size: clamp(0.75rem, 3.25vw, 0.875rem);
+    line-height: 1.18;
+  }
+
+  .resource-card-status {
+    width: 0.375rem;
+    height: 0.375rem;
+    margin-right: 0.25rem;
+  }
+
+  .resource-card-description {
+    display: -webkit-box;
+    margin-top: 0.125rem;
+    overflow: hidden;
+    font-size: clamp(0.66rem, 2.8vw, 0.75rem);
+    line-height: 1.25;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .resource-card-chevron {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-feed-grid {
+    --feed-min: clamp(7.4rem, 40.5vw, 9.5rem);
+  }
+
+  .resource-card {
+    padding: 0.5rem;
+  }
+
+  .resource-card-description {
+    -webkit-line-clamp: 1;
+  }
+}
+
+.liquid-overlay {
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactive-card,
+  .interactive-card:hover {
+    transform: none;
+    transition-duration: 0.01ms;
+  }
+
+  .liquid-pointer-light {
+    display: none;
+  }
+
+  /* 图片加载动画降级：关闭 shimmer 动画，仅保留脉冲底色 */
+  .image-loading-shimmer,
+  .skeleton-shimmer {
+    animation: none;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .dark .image-loading-shimmer,
+  .dark .skeleton-shimmer {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* 图片淡入降级：直接显示，无 scale 动画 */
+  .image-loaded {
+    opacity: 1;
+    animation: none;
+  }
+
+  .image-error {
+    animation: none;
+  }
+
+  .grid-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .liquid-pointer-light {
+    display: none;
+  }
+}
+
+/* ─── 纯搜索页面桌面端视口自适应 ─── */
+.search-only-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.search-only-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.search-area {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.search-form {
+  margin-top: 1rem;
+}
+
+.search-provider-row {
+  padding-top: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .search-only-inner {
+    padding-top: 1.5rem;
+    padding-bottom: 0;
+  }
+
+  .search-form {
+    margin-top: 0.75rem;
+  }
+}
+
+.hot-content-area {
+  flex: 1 1 180px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hot-content-area .glass-panel-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1023px) {
+  .search-only-section {
+    height: auto;
+    overflow: visible;
+    min-height: 100vh;
+  }
+
+  .search-only-inner {
+    height: auto;
+    overflow: visible;
+    min-height: calc(100vh - 8.5rem);
+  }
+
+  .hot-content-area {
+    flex: none;
+    overflow: visible;
+  }
+
+  .hot-content-area .glass-panel-fill {
+    overflow: visible;
+  }
+
+  .hot-card-item {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .hot-card-item-cover {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .hot-card-item-title {
+    font-size: 0.8125rem;
+  }
+
+  .hot-card-item-meta {
+    font-size: 0.625rem;
+  }
+}
+
+/* ─── 热门卡片内容自适应缩放 ─── */
+@media (min-width: 1024px) {
+  .hot-card-container {
+    container-type: size;
+  }
+
+  .hot-card-item {
+    padding-top: clamp(0.25rem, 3.5cqh, 0.625rem);
+    padding-bottom: clamp(0.25rem, 3.5cqh, 0.625rem);
+    gap: clamp(0.375rem, 3cqh, 0.75rem);
+  }
+
+  .hot-card-item-cover {
+    width: clamp(2rem, 9cqh, 3rem);
+    height: clamp(2rem, 9cqh, 3rem);
+  }
+
+  .hot-card-item-title {
+    font-size: clamp(0.6875rem, 2.8cqh, 0.875rem);
+  }
+
+  .hot-card-item-meta {
+    font-size: clamp(0.5625rem, 2.2cqh, 0.75rem);
+  }
+}
+
+.hot-card-resize-handle {
+  background: rgba(0, 0, 0, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dark .hot-card-resize-handle {
+  background: rgba(255, 255, 255, 0.03);
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.hot-card-resize-handle:hover {
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.dark .hot-card-resize-handle:hover {
+  background: rgba(236, 72, 153, 0.12);
+}
+
+/* ─── 番剧卡片：固定行高 + 绝对定位展开 ─── */
+.anime-grid {
+  grid-auto-rows: 48px;
+  gap: 6px;
+  padding-top: 6px;
+  padding-right: 24px;
+  padding-left: 0.5rem;
+}
+
+.anime-card-wrapper {
+  position: relative;
+  height: 48px;
+  /* 固定高度，hover 不影响布局 */
+}
+
+.anime-card-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, box-shadow;
+  transition: box-shadow 0.35s ease;
+  /* transform 由 JS 直接操作 DOM，不走 CSS transition */
+}
+
+/* 展开态：绝对定位，向下扩展，CSS transition 驱动展开/收起动画 */
+.anime-card-expanded {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 12px;
+  transform-origin: center top;
+  transform-style: preserve-3d;
+  /* 默认收起态 */
+  opacity: 0;
+  transform: scaleY(0.35) scaleX(0.92);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition:
+    opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.35s ease;
+}
+
+/* hover 时展开：弹簧过冲 + 淡入 */
+.anime-card-wrapper:hover .anime-card-expanded {
+  opacity: 1;
+  transform: scaleY(1) scaleX(1);
+  pointer-events: auto;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(236, 72, 153, 0.12);
+}
+
+/* 展开卡片内部图片缩放，与外层展开动画错开节奏 */
+.anime-card-expanded .anime-expand-cover {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
+  transform: scale(1.08);
+}
+
+.anime-card-wrapper:hover .anime-card-expanded .anime-expand-cover {
+  transform: scale(1);
+}
+
+.anime-card-compact-title {
+  transition: color 0.2s ease;
+}
+
+.anime-card-wrapper:hover .anime-card-compact-title {
+  color: rgb(236 72 153);
+}
+
+.dark .anime-card-wrapper:hover .anime-card-compact-title {
+  color: rgb(244 114 182);
+}
+
+/* ─── 番剧卡片入场动画 ─── */
+@keyframes anime-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.anime-card-enter {
+  animation: anime-card-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── 番剧卡片收起动画 ─── */
+/* 两段式：先微伸(1.04) → 再快速缩回(0.35/0.92)，ease-out 干脆利落 */
+@keyframes anime-card-collapse {
+  0% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(1);
+  }
+  30% {
+    opacity: 0.85;
+    transform: scaleY(1.04) scaleX(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(0.35) scaleX(0.92);
+  }
+}
+
+/* 收起时禁用 transition，由 keyframe 动画完全接管 */
+.anime-card-collapsing .anime-card-expanded {
+  animation: anime-card-collapse 0.38s ease-out forwards;
+  transition: none !important;
+}
+
+/* 封面收起：先微放大再缩小，错帧 30ms */
+@keyframes anime-cover-collapse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.anime-card-collapsing .anime-expand-cover {
+  animation: anime-cover-collapse 0.42s ease-out 0.03s both;
+  transition: none !important;
+}
+
+/* ─── 番剧网格切换过渡 ─── */
+.anime-grid-fade-enter {
+  animation: anime-grid-fade-in 0.3s ease both;
+}
+
+@keyframes anime-grid-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── 今日指示器脉动 ─── */
+@keyframes today-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.anime-today-dot {
+  animation: today-pulse 2s ease-in-out infinite;
+}
+
+/* ─── 星期选择器按钮基础 ─── */
+.anime-day-btn {
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.anime-day-btn:hover {
+  transform: translateY(-1px);
+}
+
+.anime-day-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* ─── 番剧订阅按钮 ─── */
+.anime-subscribe-btn {
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.anime-subscribe-btn:hover {
+  transform: scale(1.1);
+}
+
+.anime-subscribe-btn:active {
+  transform: scale(0.95);
+}
+
+/* ─── 番剧更新通知 Toast ─── */
+.anime-toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+  max-width: 20rem;
+}
+
+@keyframes anime-toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes anime-toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+.anime-toast-enter {
+  animation: anime-toast-slide-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anime-toast-exit {
+  animation: anime-toast-slide-out 0.35s ease-in both;
+}
+
+@media (max-width: 640px) {
+  .anime-toast-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+}
+
+/* ─── 看板娘（WaifuWidget）模式感知定位 ─── */
+body[data-waifu-mode="navigation"] {
+  --waifu-widget-left: 12px;
+  --waifu-widget-bottom: 12px;
+  --waifu-widget-peek-left: calc(14rem + 1rem);
+  --waifu-widget-size: min(clamp(180px, 14vw, 220px), calc(100vh - 8.25rem));
+}
+
+body[data-waifu-mode="search"] {
+  --waifu-widget-left: 0.75rem;
+  --waifu-widget-bottom: 8rem;
+  --waifu-widget-size: min(clamp(150px, 12vw, 190px), calc(100vh - 8.25rem));
+}
+
+body[data-waifu-mode] #waifu,
+body[data-waifu-mode] #waifu-toggle {
+  position: fixed !important;
+  left: var(--waifu-widget-left) !important;
+  bottom: var(--waifu-widget-bottom) !important;
+  right: auto !important;
+  top: auto !important;
+}
+
+body[data-waifu-mode] #waifu {
+  width: var(--waifu-widget-size) !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  pointer-events: none !important;
+  transform: translateY(12px) !important;
+  z-index: 25 !important;
+}
+
+body[data-waifu-mode] #waifu:hover {
+  transform: translateY(8px) !important;
+}
+
+body[data-waifu-mode] #live2d {
+  width: var(--waifu-widget-size) !important;
+  height: var(--waifu-widget-size) !important;
+  pointer-events: auto !important;
+}
+
+body[data-waifu-mode] #waifu-toggle {
+  width: 3rem !important;
+  padding: 0.25rem !important;
+  pointer-events: auto !important;
+  z-index: 26 !important;
+}
+
+body[data-waifu-mode] #waifu-toggle svg {
+  height: 1.25rem !important;
+}
+
+body[data-waifu-mode] #waifu-tips {
+  width: min(13rem, calc(100vw - 2rem)) !important;
+  min-height: 3rem !important;
+  margin: -1.25rem 0.75rem !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1.125rem !important;
+  pointer-events: none !important;
+}
+
+body[data-waifu-mode="search"] #waifu-tips {
+  width: min(11.75rem, calc(100vw - 2rem)) !important;
+}
+
+body[data-waifu-mode] #waifu-tool {
+  top: calc(var(--waifu-widget-size) * 0.22) !important;
+  right: -0.25rem !important;
+  gap: 0.25rem !important;
+  pointer-events: auto !important;
+}
+
+body[data-waifu-mode] #waifu-tool svg {
+  height: 1.25rem !important;
+}
+
+body[data-waifu-mode="navigation"][data-waifu-density="mini"] {
+  --waifu-widget-bottom: 1rem;
+  --waifu-widget-size: min(clamp(170px, 12vw, 210px), calc(100vh - 8.25rem));
+}
+
+body[data-waifu-mode="navigation"][data-waifu-density="mini"] .liquid-app aside .overflow-y-auto {
+  padding-bottom: 5.25rem;
+}
+
+body[data-waifu-mode="navigation"][data-waifu-density="mini"] #waifu {
+  left: var(--waifu-widget-peek-left) !important;
+  bottom: var(--waifu-widget-bottom) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(1rem) scale(0.94) !important;
+  transition:
+    opacity 0.18s ease,
+    transform 0.22s ease,
+    visibility 0s linear 0.18s !important;
+}
+
+body[data-waifu-mode="navigation"][data-waifu-density="mini"][data-waifu-peek="open"] #waifu {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(8px) scale(0.96) !important;
+  transition:
+    opacity 0.16s ease,
+    transform 0.22s ease,
+    visibility 0s !important;
+}
+
+body[data-waifu-mode="navigation"][data-waifu-density="mini"] #waifu-toggle {
+  display: none !important;
+}
+
+body[data-waifu-mode="navigation"][data-waifu-density="mini"]:not([data-waifu-peek="open"]) #live2d,
+body[data-waifu-mode="navigation"][data-waifu-density="mini"]:not([data-waifu-peek="open"]) #waifu-tool {
+  pointer-events: none !important;
+}
+
+body[data-waifu-mode][data-waifu-density="compact"] #waifu {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(1rem) scale(0.92) !important;
+  pointer-events: none !important;
+}
+
+body[data-waifu-mode][data-waifu-density="compact"] #waifu-toggle {
+  display: none !important;
+}
+
+body[data-waifu-mode][data-waifu-density="compact"] #live2d,
+body[data-waifu-mode][data-waifu-density="compact"] #waifu-tool {
+  pointer-events: none !important;
+}
+
+body[data-waifu-overlay="open"] #waifu,
+body[data-waifu-overlay="open"] #waifu-toggle {
+  z-index: 20 !important;
+}
+
+.waifu-mini-dock {
+  position: fixed;
+  left: 0.875rem;
+  bottom: 0.875rem;
+  z-index: 45;
+  display: flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.36) 42%, rgba(244, 114, 182, 0.34)),
+    rgba(255, 255, 255, 0.3);
+  box-shadow: 0 14px 34px rgba(236, 72, 153, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  color: rgb(219, 39, 119);
+  cursor: pointer;
+  outline: none;
+  transform: translateY(0) scale(1);
+  transition:
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.waifu-mini-dock-compact {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.78;
+  box-shadow: 0 10px 28px rgba(236, 72, 153, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.waifu-mini-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0.35rem;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.waifu-mini-dock svg {
+  position: relative;
+  z-index: 1;
+  stroke-width: 2.4;
+}
+
+.waifu-mini-dock:hover,
+.waifu-mini-dock:focus-visible,
+.waifu-mini-dock-open {
+  color: rgb(190, 24, 93);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 18px 40px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.dark .waifu-mini-dock {
+  border-color: rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.22), rgba(30, 41, 59, 0.48) 46%, rgba(236, 72, 153, 0.28)),
+    rgba(15, 23, 42, 0.42);
+  color: rgb(244, 114, 182);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+@media (min-width: 1280px) {
+  body[data-waifu-mode="navigation"] {
+    --waifu-widget-peek-left: calc(16rem + 1rem);
+  }
+}
+
+@media (max-width: 1023px) {
+  body[data-waifu-mode="navigation"] {
+    --waifu-widget-peek-left: calc(min(82vw, 18rem) + 1rem);
+  }
+}
+
+@media (max-height: 700px) {
+  body[data-waifu-mode] {
+    --waifu-widget-size: min(clamp(140px, 11vw, 180px), calc(100vh - 7rem));
+  }
+
+  .waifu-mini-dock {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
